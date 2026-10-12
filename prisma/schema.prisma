@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Пользователь: ученик, учитель или админ (role: STUDENT | TEACHER | ADMIN).
+model User {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String   @unique
+  role      String   @default("STUDENT") // STUDENT | TEACHER | ADMIN
+  createdAt DateTime @default(now())
+
+  // как ученик
+  enrollments           Enrollment[]
+  studyGrades           Grade[]
+  studentActivityScores ActivityScore[]   @relation("StudentActivityScores")
+  studentBehavior       BehaviorRecord[]  @relation("StudentBehaviorRecords")
+  proposedForMe         ProposedGrade[]   @relation("ProposedForStudent")
+
+  // как учитель
+  teachings             Teaching[]
+  authoredAssessments   Assessment[]      @relation("AssessmentsByTeacher")
+  teacherActivityScores ActivityScore[]   @relation("TeacherActivityScores")
+  teacherBehavior       BehaviorRecord[]  @relation("TeacherBehaviorRecords")
+  proposedByMe          ProposedGrade[]   @relation("ProposedByTeacher")
+
+  // классное руководство
+  curatedClasses        Klass[]
+}
+
+/// Класс: "10А".
+model Klass {
+  id        String  @id @default(cuid())
+  name      String // "10А"
+  year      String // "2025/2026"
+  curatorId String? // классный руководитель
+
+  curator         User?            @relation(fields: [curatorId], references: [id])
+  enrollments     Enrollment[]
+  teachings       Teaching[]
+  assessments     Assessment[]
+  behaviorRecords BehaviorRecord[]
+}
+
+/// Предмет: "Математика".
+model Subject {
+  id             String           @id @default(cuid())
+  name           String
+  code           String
+  teachings      Teaching[]
+  assessments    Assessment[]
+  activityScores ActivityScore[]
+  proposedGrades ProposedGrade[]
+}
+
+/// Ученик состоит в классе.
+model Enrollment {
+  id        String @id @default(cuid())
+  studentId String
+  classId   String
+
+  student User  @relation(fields: [studentId], references: [id])
+  klass   Klass @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId])
+}
+
+/// Учитель ведёт предмет в классе.
+model Teaching {
+  id        String @id @default(cuid())
+  teacherId String
+  subjectId String
+  classId   String
+
+  teacher User    @relation(fields: [teacherId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  klass   Klass   @relation(fields: [classId], references: [id])
+
+  @@unique([teacherId, subjectId, classId])
+}
+
+/// Работа: формативка, СОР или СОЧ (type). maxScore задаёт учитель — 5/10/20/30…
+model Assessment {
+  id        String   @id @default(cuid())
+  classId   String
+  subjectId String
+  teacherId String
+  type      String // FORMATIVE | SOR | SOCH
+  title     String
+  date      DateTime @default(now())
+  maxScore  Int
+  quarter   Int // 1..4
+
+  klass   Klass   @relation(fields: [classId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  teacher User    @relation("AssessmentsByTeacher", fields: [teacherId], references: [id])
+  grades  Grade[]
+}
+
+/// Оценка ученика за работу. score = балл (может быть пусто).
+model Grade {
+  id           String   @id @default(cuid())
+  assessmentId String
+  studentId    String
+  score        Float?
+  comment      String?
+  updatedAt    DateTime @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id])
+  student    User       @relation(fields: [studentId], references: [id])
+
+  @@unique([assessmentId, studentId])
+}
+
+/// 🔥 Активность: оценка 1..10. Отдельная метрика, не входит в официальные оценки.
+model ActivityScore {
+  id        String   @id @default(cuid())
+  studentId String
+  subjectId String
+  teacherId String
+  date      DateTime @default(now())
+  value     Int // 1..10
+  comment   String?
+
+  student User    @relation("StudentActivityScores", fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  teacher User    @relation("TeacherActivityScores", fields: [teacherId], references: [id])
+}
+
+/// 🔥 Поведение — ОТДЕЛЬНАЯ категория (kind: POSITIVE | NEGATIVE | NEUTRAL).
+/// Не смешивается с официальными оценками и активностью.
+model BehaviorRecord {
+  id        String   @id @default(cuid())
+  studentId String
+  classId   String
+  teacherId String
+  date      DateTime @default(now())
+  kind      String // POSITIVE | NEGATIVE | NEUTRAL
+  points    Int      @default(0) // опциональный весовой балл
+  comment   String?
+
+  student User    @relation("StudentBehaviorRecords", fields: [studentId], references: [id])
+  klass   Klass   @relation(fields: [classId], references: [id])
+  teacher User    @relation("TeacherBehaviorRecords", fields: [teacherId], references: [id])
+}
+
+/// 🔥 «Потенциальная оценка»: рекомендация учителя на основе активности/поведения.
+/// status: PENDING | ACCEPTED | REJECTED. Учитель сам решает, применять ли к итогу.
+model ProposedGrade {
+  id          String @id @default(cuid())
+  studentId   String
+  subjectId   String
+  quarter     Int
+  value       Int // 2..5
+  basis       String @default("activity") // activity | behavior
+  status      String @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  createdById String
+
+  student User    @relation("ProposedForStudent", fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  creator User    @relation("ProposedByTeacher", fields: [createdById], references: [id])
+}
