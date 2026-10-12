@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎓 BIL — Электронный журнал
 
-## Getting Started
+> **BIL — Electronic Journal** · **BIL — электрондық журналы**
+>
+> Электронный дневник/журнал школы в духе bilimclass.kz, но со своими фишками:
+> гибкие СОР/СОЧ, активность 1–10, поведение отдельной категорией и «потенциальная оценка».
+> Три языка из коробки: 🇷🇺 Русский · 🇰🇿 Қазақша · 🇬🇧 English.
 
-First, run the development server:
+Учебный/портфолио-проект для поступления в университет.
+
+---
+
+## ✨ Возможности
+
+- 🔐 **Роли**: ученик, учитель, админ — разграничение доступа.
+- 🗂 **Всё по классам**: ученики организованы внутри класса, без поиска по общей свалке.
+- 📊 **Гибкие СОР/СОЧ**: учитель сам задаёт максимум — из 10, 20, 30; проценты считаются автоматически.
+- ⭐ **Активность 1–10** — отдельная метрика ученика по предмету.
+- 🧭 **Поведение** — отдельная категория (замечания/поощрения), не смешивается с оценками.
+- 💡 **«Потенциальная оценка»** — рекомендация на основе активности/поведения, которую учитель может применить к итогу.
+- 🌍 **Три языка**: RU / KZ / EN (переключатель в интерфейсе).
+
+> Проект в активной разработке. Текущее состояние — базовый каркас (фронтенд + i18n + схема БД).
+
+---
+
+## 🧱 Стек
+
+| Слой | Технология |
+|---|---|
+| Фреймворк | [Next.js 16](https://nextjs.org) (App Router, Turbopack) |
+| UI | React 19 · Tailwind CSS v4 · shadcn/ui (Base UI) |
+| Локализация | next-intl (ru / kk / en) |
+| БД | Prisma + SQLite (локально) |
+| Язык | TypeScript |
+
+---
+
+## 🚀 Запуск
 
 ```bash
+# 1. Зависимости
+npm install
+
+# 2. Переменные окружения
+cp .env.example .env
+
+# 3. База данных (создаст prisma/dev.db и сгенерирует клиент)
+npx prisma migrate dev
+
+# 4. Дев-сервер
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Открыть: **http://localhost:3000** → редирект на `/ru`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Структура
 
-## Learn More
+```
+.
+├─ messages/               # переводы: ru.json, kk.json, en.json
+├─ prisma/
+│  ├─ schema.prisma        # модель данных (классы, предметы, оценки, активность, поведение)
+│  └─ migrations/          # миграции
+├─ src/
+│  ├─ app/[locale]/        # страницы (локаль в пути): layout, page, login
+│  ├─ components/
+│  │  ├─ ui/               # компоненты shadcn/ui
+│  │  └─ locale-switcher.tsx
+│  ├─ i18n/                # настройка next-intl: routing, navigation, request
+│  ├─ lib/db.ts            # синглтон Prisma
+│  └─ proxy.ts             # middleware (файл-конвенция Next 16)
+├─ .env.example
+└─ next.config.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Модель данных (кратко)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`User` (роль: STUDENT/TEACHER/ADMIN) · `Klass` · `Subject` · `Enrollment` · `Teaching`
+· `Assessment` (FORMATIVE/SOR/SOCH, maxScore задаёт учитель) · `Grade`
+· `ActivityScore` (1–10) · `BehaviorRecord` (POSITIVE/NEGATIVE/NEUTRAL) · `ProposedGrade`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🗺 Roadmap
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [x] Каркас: Next.js + Tailwind + shadcn/ui + i18n RU/KZ/EN + схема БД
+- [ ] Аутентификация и 3 роли
+- [ ] Справочники: классы, предметы, назначения учителей
+- [ ] Учитель ставит оценку, ученик видит свои
+- [ ] Таблица журнала, СОР/СОЧ, проценты, четвертная
+- [ ] Активность 1–10, поведение, «потенциальная оценка»
+- [ ] Полировка UI, сид-данные, деплой
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📄 Лицензия
+
+Учебный проект. Использование — по договорённости с автором.

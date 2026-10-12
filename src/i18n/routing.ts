@@ -1,8 +1,8 @@
 import { defineRouting } from "next-intl/routing";
 
 export const routing = defineRouting({
-  // ru — по умолчанию; kk — казахский (ISO 639-1)
-  locales: ["ru", "kk"],
+  // ru — по умолчанию; kk — казахский; en — английский
+  locales: ["ru", "kk", "en"],
   defaultLocale: "ru",
 });
 

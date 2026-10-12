@@ -1,0 +1,28 @@
+{
+  "common": {
+    "appName": "BIL Electronic Journal",
+    "tagline": "School electronic diary"
+  },
+  "landing": {
+    "badge": "University admission project",
+    "title": "BIL Electronic Journal",
+    "subtitle": "Grades, SOR/SOCH, activity and behavior — in one app.",
+    "login": "Sign in",
+    "comingSoon": "Section under development",
+    "features": {
+      "gradesTitle": "Grades and SOR/SOCH",
+      "gradesText": "The teacher sets the maximum themselves — 10, 20, 30. Percentages and term grades are calculated automatically.",
+      "activityTitle": "Activity 1–10",
+      "activityText": "A separate metric of student activity for each subject.",
+      "behaviorTitle": "Behavior",
+      "behaviorText": "A separate category: remarks and praise, kept apart from grades.",
+      "classesTitle": "Everything by class",
+      "classesText": "Students are organized by class — no searching through a pile."
+    }
+  },
+  "roles": {
+    "student": "Student",
+    "teacher": "Teacher",
+    "admin": "Admin"
+  }
+}
