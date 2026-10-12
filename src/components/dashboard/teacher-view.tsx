@@ -2,11 +2,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+export interface TeacherStudentItem {
+  id: string;
+  fullName: string;
+  email: string;
+  sorScore: string;
+  sochScore: string;
+  activityScore: string;
+  finalGrade: string;
+}
+
+export interface TeacherClassItem {
+  id: string;
+  className: string;
+  subjectName: string;
+  students: TeacherStudentItem[];
+}
+
 interface TeacherViewProps {
-  teachings: any[];
+  teachings: TeacherClassItem[];
 }
 
 export function TeacherView({ teachings }: TeacherViewProps) {
+  const currentClass = teachings[0];
+  const students = currentClass?.students || [];
+
   return (
     <div className="space-y-8">
       {/* 3 Сводные карточки учителя */}
@@ -18,9 +38,11 @@ export function TeacherView({ teachings }: TeacherViewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">10А сыныбы</div>
+            <div className="text-2xl font-bold">
+              {currentClass ? `${currentClass.className} сыныбы` : "Сынып жоқ"}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Алгебра және анализ бастамалары
+              {currentClass ? currentClass.subjectName : "Пән бекітілмеген"}
             </p>
           </CardContent>
         </Card>
@@ -28,13 +50,13 @@ export function TeacherView({ teachings }: TeacherViewProps) {
         <Card className="border-border/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              БЖБ / ТЖБ бақылауы
+              Оқушылар контингенті
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3 жұмыс</div>
+            <div className="text-2xl font-bold">{students.length} оқушы</div>
             <p className="text-xs text-muted-foreground mt-1">
-              1-тоқсан бойынша толық енгізілді
+              1-тоқсан бойынша тіркелген
             </p>
           </CardContent>
         </Card>
@@ -46,7 +68,9 @@ export function TeacherView({ teachings }: TeacherViewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">1 мақұлданды</div>
+            <div className="text-2xl font-bold text-emerald-600">
+              {students.filter((s) => s.finalGrade !== "—").length} белсенді
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Белсенділік негізінде қорытылды
             </p>
@@ -57,7 +81,9 @@ export function TeacherView({ teachings }: TeacherViewProps) {
       {/* Журнал класса */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">10А Сыныбы — Пән журналы</CardTitle>
+          <CardTitle className="text-lg font-bold">
+            {currentClass?.className} Сыныбы — Пән журналы
+          </CardTitle>
           <CardDescription>
             Оқушылар тізімі, бағалар қою және белсенділік пен тәртіпті белгілеу
           </CardDescription>
@@ -66,82 +92,67 @@ export function TeacherView({ teachings }: TeacherViewProps) {
           <div className="rounded-xl border border-border/80 overflow-hidden">
             <div className="p-4 bg-muted/30 border-b flex items-center justify-between flex-wrap gap-3">
               <div>
-                <span className="font-semibold text-sm">Сынып: 10А</span>
+                <span className="font-semibold text-sm">
+                  Сынып: {currentClass?.className}
+                </span>
                 <span className="text-muted-foreground text-xs ml-3">
-                  Пән: Алгебра • Оқушылар: 3
+                  Пән: {currentClass?.subjectName} • Оқушылар: {students.length}
                 </span>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="text-xs">
+                <Button size="sm" variant="outline" className="text-xs cursor-pointer">
                   + БЖБ/ТЖБ қосу
                 </Button>
-                <Button size="sm" className="text-xs">
+                <Button size="sm" className="text-xs cursor-pointer">
                   Журналды ашу
                 </Button>
               </div>
             </div>
 
-            {/* Список учеников */}
+            {/* Список реальных учеников из базы данных */}
             <div className="p-4 space-y-3">
-              <div className="flex items-center justify-between text-sm py-2 border-b border-border/40">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
-                    АҚ
-                  </div>
-                  <div>
-                    <div className="font-semibold">Арман Қайрат</div>
-                    <div className="text-xs text-muted-foreground">student@bil.edu.kz</div>
-                  </div>
+              {students.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  Бұл сыныпта әлі оқушылар жоқ
                 </div>
-                <div className="flex items-center gap-4 text-xs font-mono">
-                  <span>БЖБ: 19/20</span>
-                  <span>ТЖБ: 28/30</span>
-                  <span className="text-primary font-bold">Белсенділік: 10/10</span>
-                  <Badge variant="secondary" className="font-sans text-[11px]">
-                    Қорытынды: 5
-                  </Badge>
-                </div>
-              </div>
+              ) : (
+                students.map((student) => {
+                  const initials = student.fullName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2);
 
-              <div className="flex items-center justify-between text-sm py-2 border-b border-border/40">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs">
-                    ДС
-                  </div>
-                  <div>
-                    <div className="font-semibold">Диас Сәдуақас</div>
-                    <div className="text-xs text-muted-foreground">dias@bil.edu.kz</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-mono">
-                  <span>БЖБ: 17/20</span>
-                  <span>ТЖБ: 25/30</span>
-                  <span className="text-primary font-bold">Белсенділік: 8/10</span>
-                  <Badge variant="secondary" className="font-sans text-[11px]">
-                    Қорытынды: 4
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-sm py-2">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-xs">
-                    АМ
-                  </div>
-                  <div>
-                    <div className="font-semibold">Айсұлу Мұрат</div>
-                    <div className="text-xs text-muted-foreground">aisulu@bil.edu.kz</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-mono">
-                  <span>БЖБ: 20/20</span>
-                  <span>ТЖБ: 29/30</span>
-                  <span className="text-primary font-bold">Белсенділік: 9/10</span>
-                  <Badge variant="secondary" className="font-sans text-[11px]">
-                    Қорытынды: 5
-                  </Badge>
-                </div>
-              </div>
+                  return (
+                    <div
+                      key={student.id}
+                      className="flex items-center justify-between text-sm py-2 border-b border-border/40 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase">
+                          {initials}
+                        </div>
+                        <div>
+                          <div className="font-semibold">{student.fullName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {student.email}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs font-mono">
+                        <span>БЖБ: {student.sorScore}</span>
+                        <span>ТЖБ: {student.sochScore}</span>
+                        <span className="text-primary font-bold">
+                          Белсенділік: {student.activityScore}
+                        </span>
+                        <Badge variant="secondary" className="font-sans text-[11px]">
+                          Қорытынды: {student.finalGrade}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </CardContent>

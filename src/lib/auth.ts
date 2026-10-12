@@ -55,9 +55,10 @@ export async function loginWithRole(email: string, locale: string) {
 
   if (user) {
     await setSessionUser(user.id);
+    redirect(`/${locale}/dashboard`);
+  } else {
+    redirect(`/${locale}/login?error=not_found`);
   }
-
-  redirect(`/${locale}/dashboard`);
 }
 
 export async function logoutAction(locale: string) {

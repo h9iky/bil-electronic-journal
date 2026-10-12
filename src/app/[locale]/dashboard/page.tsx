@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { School, LogOut, GraduationCap, BookOpen, ShieldCheck, Sparkles } from "lucide-react";
 
-// Импортируем наши 3 простых модуля
+// Импортируем наши 3 чистых модуля
 import { StudentView } from "@/components/dashboard/student-view";
 import { TeacherView } from "@/components/dashboard/teacher-view";
 import { AdminView } from "@/components/dashboard/admin-view";
@@ -21,18 +21,18 @@ export default async function DashboardPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  // 1. Проверяем, залогинен ли пользователь (по куке)
+  // 1. Проверяем сессию пользователя (серверная авторизация через куки)
   const user = await getCurrentUser();
   if (!user) {
     redirect(`/${locale}/login`);
   }
 
-  // 2. Подключаем переводы
+  // 2. Подключаем локализацию
   const t = await getTranslations("dashboard");
   const tc = await getTranslations("common");
   const tr = await getTranslations("roles");
 
-  // 3. Загружаем данные из базы ТОЛЬКО для нужной роли (KISS / DRY)
+  // 3. Загружаем данные для Ученика (STUDENT)
   const studentGrades =
     user.role === "STUDENT"
       ? await db.grade.findMany({
@@ -56,14 +56,69 @@ export default async function DashboardPage({
         })
       : [];
 
-  const teacherTeachings =
+  // 4. Загружаем данные для Учителя (TEACHER) — реальные классы и ученики
+  const rawTeacherTeachings =
     user.role === "TEACHER"
       ? await db.teaching.findMany({
           where: { teacherId: user.id },
-          include: { klass: true, subject: true },
+          include: {
+            klass: {
+              include: {
+                enrollments: {
+                  include: {
+                    student: {
+                      include: {
+                        studyGrades: {
+                          include: { assessment: true },
+                        },
+                        studentActivityScores: true,
+                        proposedForMe: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            subject: true,
+          },
         })
       : [];
 
+  const teacherTeachings = rawTeacherTeachings.map((teaching) => ({
+    id: teaching.id,
+    className: teaching.klass.name,
+    subjectName: teaching.subject.name,
+    students: teaching.klass.enrollments.map(({ student }) => {
+      const sor = student.studyGrades.find(
+        (g) => g.assessment.type === "SOR" && g.assessment.subjectId === teaching.subjectId
+      );
+      const soch = student.studyGrades.find(
+        (g) => g.assessment.type === "SOCH" && g.assessment.subjectId === teaching.subjectId
+      );
+      const acts = student.studentActivityScores.filter(
+        (a) => a.subjectId === teaching.subjectId
+      );
+      const avgAct =
+        acts.length > 0
+          ? (acts.reduce((acc, c) => acc + c.value, 0) / acts.length).toFixed(0)
+          : null;
+      const prop = student.proposedForMe.find(
+        (p) => p.subjectId === teaching.subjectId
+      );
+
+      return {
+        id: student.id,
+        fullName: student.fullName,
+        email: student.email,
+        sorScore: sor?.score != null ? `${sor.score}/${sor.assessment.maxScore}` : "—",
+        sochScore: soch?.score != null ? `${soch.score}/${soch.assessment.maxScore}` : "—",
+        activityScore: avgAct ? `${avgAct}/10` : "—",
+        finalGrade: prop?.value ? `${prop.value}` : "—",
+      };
+    }),
+  }));
+
+  // 5. Загружаем данные для Админа (ADMIN)
   const totalUsers = user.role === "ADMIN" ? await db.user.count() : 0;
   const totalClasses = user.role === "ADMIN" ? await db.klass.count() : 0;
   const totalSubjects = user.role === "ADMIN" ? await db.subject.count() : 0;
@@ -74,7 +129,7 @@ export default async function DashboardPage({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* ВЕРХНЯЯ ШАПКА САЙТА (NAVBAR) */}
+      {/* Верхний Navbar */}
       <header className="border-b bg-card/60 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
           <div className="flex items-center gap-3">
@@ -122,9 +177,9 @@ export default async function DashboardPage({
         </div>
       </header>
 
-      {/* ОСНОВНОЙ КОНТЕНТ */}
+      {/* Основная рабочая область */}
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 py-8 space-y-8">
-        {/* Баннер приветствия */}
+        {/* Приветственный баннер */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-background border border-primary/20 p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -139,12 +194,12 @@ export default async function DashboardPage({
           </h1>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             {user.role === "STUDENT" && "Оқу жылы: 2025/2026 • 10А сыныбы • 1-тоқсан"}
-            {user.role === "TEACHER" && "BIL математика бірлестігі • 2025/2026"}
+            {user.role === "TEACHER" && "BIL математика бірлестігі • 2025/2026 оқу жылы"}
             {user.role === "ADMIN" && "Мектеп жүйесінің басқару орталығы"}
           </p>
         </div>
 
-        {/* 4. Отображаем нужный вид в зависимости от роли (чисто и понятно!) */}
+        {/* Ролевые представления */}
         {user.role === "STUDENT" && (
           <StudentView
             grades={studentGrades}

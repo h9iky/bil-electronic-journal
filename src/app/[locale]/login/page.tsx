@@ -17,10 +17,13 @@ import {
 
 export default async function LoginPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ error?: string }>;
 }) {
   const { locale } = await params;
+  const sp = searchParams ? await searchParams : {};
   setRequestLocale(locale);
 
   const t = await getTranslations("auth");
@@ -63,6 +66,12 @@ export default async function LoginPage({
             </CardHeader>
 
             <CardContent className="space-y-6 pt-2">
+              {sp.error === "not_found" && (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-center text-xs font-medium text-destructive">
+                  Мұндай электрондық пошта тіркелмеген. Төмендегі дайын 1-Click демо-аккаунттарды таңдаңыз.
+                </div>
+              )}
+
               {/* Quick Role Selection (Demo 1-Click) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

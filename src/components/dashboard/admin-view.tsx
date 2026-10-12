@@ -1,11 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+export interface AdminUserItem {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  createdAt: Date;
+}
+
 interface AdminViewProps {
   totalUsers: number;
   totalClasses: number;
   totalSubjects: number;
-  users: any[];
+  users: AdminUserItem[];
   t: (key: string) => string;
   tr: (key: "student" | "teacher" | "admin") => string;
 }

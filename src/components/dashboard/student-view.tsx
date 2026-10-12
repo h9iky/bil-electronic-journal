@@ -9,10 +9,42 @@ import {
 } from "lucide-react";
 
 // Типы данных, которые приходят из базы данных (Prisma)
+export interface StudentGradeItem {
+  id: string;
+  score: number | null;
+  comment: string | null;
+  assessment: {
+    title: string;
+    type: string;
+    maxScore: number;
+    date: Date;
+    subject: {
+      name: string;
+    };
+  };
+}
+
+export interface StudentActivityItem {
+  id: string;
+  value: number;
+  comment: string | null;
+  subject: {
+    name: string;
+  };
+}
+
+export interface StudentBehaviorItem {
+  id: string;
+  kind: string;
+  points: number;
+  comment: string | null;
+  date: Date;
+}
+
 interface StudentViewProps {
-  grades: any[];
-  activities: any[];
-  behaviors: any[];
+  grades: StudentGradeItem[];
+  activities: StudentActivityItem[];
+  behaviors: StudentBehaviorItem[];
   t: (key: string) => string;
 }
 
