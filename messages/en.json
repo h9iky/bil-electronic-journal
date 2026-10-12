@@ -1,24 +1,70 @@
 {
   "common": {
     "appName": "BIL Electronic Journal",
-    "tagline": "School electronic diary"
+    "tagline": "School electronic diary",
+    "backToHome": "Back to Home",
+    "logout": "Log out"
   },
   "landing": {
-    "badge": "University admission project",
+    "badge": "University Admission Project • 2026",
     "title": "BIL Electronic Journal",
-    "subtitle": "Grades, SOR/SOCH, activity and behavior — in one app.",
-    "login": "Sign in",
+    "subtitle": "Grades, SOR/SOCH, activity and behavior — in one modern ecosystem.",
+    "login": "Sign In",
+    "dashboard": "Dashboard",
     "comingSoon": "Section under development",
     "features": {
       "gradesTitle": "Grades and SOR/SOCH",
       "gradesText": "The teacher sets the maximum themselves — 10, 20, 30. Percentages and term grades are calculated automatically.",
       "activityTitle": "Activity 1–10",
-      "activityText": "A separate metric of student activity for each subject.",
+      "activityText": "A dedicated 1–10 metric for student activity in each subject.",
       "behaviorTitle": "Behavior",
-      "behaviorText": "A separate category: remarks and praise, kept apart from grades.",
+      "behaviorText": "A separate category: praise and warnings, kept apart from grades.",
       "classesTitle": "Everything by class",
-      "classesText": "Students are organized by class — no searching through a pile."
+      "classesText": "Students are organized strictly by class — clean and secure structure."
     }
+  },
+  "auth": {
+    "title": "Sign In",
+    "subtitle": "Welcome to BIL Electronic School Journal",
+    "demoTitle": "1-Click Demo Login:",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "student@bil.edu.kz",
+    "submit": "Sign In",
+    "asStudent": "Student (Arman Qairat • 10A)",
+    "asTeacher": "Teacher (Baqyt Nurlan • Math)",
+    "asAdmin": "Admin (Serik Akhmetov)",
+    "securityNote": "Role access control is enforced server-side"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "role": "Role",
+    "studentTitle": "Student Dashboard",
+    "teacherTitle": "Teacher Workspace",
+    "adminTitle": "Admin Control Panel",
+    "class": "Class",
+    "gradesOverview": "Academic Performance & Grades",
+    "activityMetric": "Activity Metric",
+    "behaviorMetric": "Behavior Records",
+    "potentialGrade": "Proposed Potential Grade",
+    "activityDesc": "Rated 1 to 10 for classroom engagement and effort",
+    "behaviorDesc": "Separate tracking of notes and conduct",
+    "potentialGradeDesc": "Official teacher recommendation based on activity and behavior",
+    "subject": "Subject",
+    "type": "Type",
+    "score": "Score",
+    "maxScore": "Max Score",
+    "percent": "Percent",
+    "date": "Date",
+    "status": "Status",
+    "action": "Action",
+    "myClasses": "My Classes",
+    "mySubjects": "Assigned Subjects",
+    "studentsCount": "Students",
+    "quickActions": "Quick Actions",
+    "systemStats": "System Statistics",
+    "totalUsers": "Total Users",
+    "totalClasses": "Classes",
+    "totalSubjects": "Subjects"
   },
   "roles": {
     "student": "Student",
