@@ -16,9 +16,16 @@ import {
   isAssessmentStatus,
   isAssessmentType,
   isBehaviorKind,
+  isProposalBasis,
+  isProposalStatus,
+  isQuarter,
+  GRADE_MAX,
+  GRADE_MIN,
   type AssessmentStatus,
   type AssessmentType,
   type BehaviorKind,
+  type ProposalBasis,
+  type ProposalStatus,
 } from "@/lib/constants";
 import { isActivityInRange, isScoreValid } from "@/lib/grading";
 
@@ -120,9 +127,7 @@ export async function createAssessment(input: {
     return fail("invalid_max_score");
   }
 
-  if (!Number.isInteger(input.quarter) || input.quarter < 1 || input.quarter > 4) {
-    return fail("invalid_quarter");
-  }
+  if (!isQuarter(input.quarter)) return fail("invalid_quarter");
 
   // SAS привязан к разделу программы, SAT — ровно один за четверть.
   let sectionId: string | null = null;
@@ -350,6 +355,132 @@ export async function deleteBehavior(input: { behaviorId: string }): Promise<Act
   if (!record) return fail("not_found");
 
   await db.behaviorRecord.delete({ where: { id: record.id } });
+
+  refresh();
+  return ok;
+}
+
+// ---------------------------------------------------------------------------
+// Предложения («потенциальная оценка»)
+// ---------------------------------------------------------------------------
+
+/**
+ * Создать или заменить рекомендацию по (ученик, предмет, четверть).
+ *
+ * Схема допускает ключ `[studentId, subjectId, quarter, basis]`, но в журнале
+ * держим одно предложение на четверть: `basis` — это лишь обоснование, а не
+ * отдельная сущность. Поэтому при повторном вызове обновляем строку и снова
+ * переводим её в `PENDING` — учитель передумал, пусть решает заново.
+ */
+export async function saveProposal(input: {
+  teachingId: string;
+  studentId: string;
+  quarter: number;
+  value: number;
+  basis: ProposalBasis;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const teaching = await ownedTeaching(teacher.id, input.teachingId);
+  if (!teaching) return fail("not_found");
+
+  if (!Number.isInteger(input.value) || input.value < GRADE_MIN || input.value > GRADE_MAX) {
+    return fail("invalid_grade");
+  }
+  if (!isProposalBasis(input.basis)) return fail("invalid_basis");
+  if (!isQuarter(input.quarter)) return fail("invalid_quarter");
+
+  const enrolled = await db.enrollment.findFirst({
+    where: { studentId: input.studentId, classId: teaching.classId },
+  });
+  if (!enrolled) return fail("not_enrolled");
+
+  const existing = await db.proposedGrade.findFirst({
+    where: {
+      studentId: input.studentId,
+      subjectId: teaching.subjectId,
+      quarter: input.quarter,
+    },
+  });
+
+  if (existing) {
+    await db.proposedGrade.update({
+      where: { id: existing.id },
+      data: {
+        value: input.value,
+        basis: input.basis,
+        status: "PENDING",
+        classId: teaching.classId,
+        createdById: teacher.id,
+      },
+    });
+  } else {
+    await db.proposedGrade.create({
+      data: {
+        studentId: input.studentId,
+        subjectId: teaching.subjectId,
+        classId: teaching.classId,
+        quarter: input.quarter,
+        value: input.value,
+        basis: input.basis,
+        status: "PENDING",
+        createdById: teacher.id,
+      },
+    });
+  }
+
+  refresh();
+  return ok;
+}
+
+/** Решение учителя: применить (`ACCEPTED`), отклонить (`REJECTED`) или вернуть в `PENDING`. */
+export async function setProposalStatus(input: {
+  teachingId: string;
+  studentId: string;
+  quarter: number;
+  status: ProposalStatus;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const teaching = await ownedTeaching(teacher.id, input.teachingId);
+  if (!teaching) return fail("not_found");
+  if (!isProposalStatus(input.status)) return fail("invalid_status");
+
+  const proposal = await db.proposedGrade.findFirst({
+    where: {
+      studentId: input.studentId,
+      subjectId: teaching.subjectId,
+      quarter: input.quarter,
+    },
+  });
+  if (!proposal) return fail("not_found");
+
+  await db.proposedGrade.update({
+    where: { id: proposal.id },
+    data: { status: input.status },
+  });
+
+  refresh();
+  return ok;
+}
+
+export async function deleteProposal(input: {
+  teachingId: string;
+  studentId: string;
+  quarter: number;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const teaching = await ownedTeaching(teacher.id, input.teachingId);
+  if (!teaching) return fail("not_found");
+
+  const proposal = await db.proposedGrade.findFirst({
+    where: {
+      studentId: input.studentId,
+      subjectId: teaching.subjectId,
+      quarter: input.quarter,
+    },
+  });
+  if (!proposal) return fail("not_found");
+
+  await db.proposedGrade.delete({ where: { id: proposal.id } });
 
   refresh();
   return ok;

@@ -144,6 +144,23 @@
     "edit": "Изменить",
     "deleteRecord": "Удалить запись",
     "deleteRecordConfirm": "Удалить эту запись?",
+    "proposal": "Потенциальная",
+    "recommend": "Рекомендовать",
+    "proposalTitle": "Потенциальная оценка",
+    "proposalDesc": "Рекомендация для {student} на основе активности или поведения.",
+    "proposalValue": "Оценка",
+    "proposalBasis": "Основание",
+    "accept": "Применить",
+    "reject": "Отклонить",
+    "resetProposal": "Вернуть на рассмотрение",
+    "cancel": "Отмена",
+    "proposalCreated": "Предложение создано.",
+    "proposalUpdated": "Предложение обновлено.",
+    "proposalAccepted": "Предложение принято.",
+    "proposalRejected": "Предложение отклонено.",
+    "proposalReset": "Возвращено на рассмотрение.",
+    "proposalDeleted": "Предложение удалено.",
+    "proposalDeleteConfirm": "Удалить предложение?",
     "error": {
       "unknown": "Не удалось выполнить действие.",
       "not_found": "Работа или класс не найдены.",
@@ -159,7 +176,9 @@
       "invalid_status": "Неверный статус.",
       "invalid_value": "Активность должна быть от 1 до 10.",
       "invalid_kind": "Неверный тип записи.",
-      "invalid_points": "Очки должны быть от 0 до 100."
+      "invalid_points": "Очки должны быть от 0 до 100.",
+      "invalid_grade": "Оценка должна быть от 2 до 5.",
+      "invalid_basis": "Неверное основание предложения."
     }
   },
   "roles": {

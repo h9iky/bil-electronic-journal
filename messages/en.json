@@ -144,6 +144,23 @@
     "edit": "Edit",
     "deleteRecord": "Delete record",
     "deleteRecordConfirm": "Delete this record?",
+    "proposal": "Potential",
+    "recommend": "Recommend",
+    "proposalTitle": "Potential grade",
+    "proposalDesc": "A recommendation for {student} based on activity or behaviour.",
+    "proposalValue": "Grade",
+    "proposalBasis": "Basis",
+    "accept": "Apply",
+    "reject": "Reject",
+    "resetProposal": "Reset to pending",
+    "cancel": "Cancel",
+    "proposalCreated": "Proposal created.",
+    "proposalUpdated": "Proposal updated.",
+    "proposalAccepted": "Proposal accepted.",
+    "proposalRejected": "Proposal rejected.",
+    "proposalReset": "Reset to pending.",
+    "proposalDeleted": "Proposal deleted.",
+    "proposalDeleteConfirm": "Delete the proposal?",
     "error": {
       "unknown": "The action could not be completed.",
       "not_found": "Work or class not found.",
@@ -159,7 +176,9 @@
       "invalid_status": "Invalid status.",
       "invalid_value": "Activity must be between 1 and 10.",
       "invalid_kind": "Invalid record kind.",
-      "invalid_points": "Points must be between 0 and 100."
+      "invalid_points": "Points must be between 0 and 100.",
+      "invalid_grade": "Grade must be between 2 and 5.",
+      "invalid_basis": "Invalid proposal basis."
     }
   },
   "roles": {

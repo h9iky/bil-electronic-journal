@@ -144,6 +144,23 @@
     "edit": "Өзгерту",
     "deleteRecord": "Жазбаны жою",
     "deleteRecordConfirm": "Осы жазбаны жою керек пе?",
+    "proposal": "Потенциалдық",
+    "recommend": "Ұсыну",
+    "proposalTitle": "Потенциалдық баға",
+    "proposalDesc": "{student} үшін белсенділік немесе тәртіп негізіндегі ұсыныс.",
+    "proposalValue": "Баға",
+    "proposalBasis": "Негіздеме",
+    "accept": "Қолдану",
+    "reject": "Қабылдамау",
+    "resetProposal": "Қарауға қайтару",
+    "cancel": "Болдырмау",
+    "proposalCreated": "Ұсыныс жасалды.",
+    "proposalUpdated": "Ұсыныс жаңартылды.",
+    "proposalAccepted": "Ұсыныс қабылданды.",
+    "proposalRejected": "Ұсыныс қабылданбады.",
+    "proposalReset": "Қарауға қайтарылды.",
+    "proposalDeleted": "Ұсыныс жойылды.",
+    "proposalDeleteConfirm": "Ұсынысты жою керек пе?",
     "error": {
       "unknown": "Әрекетті орындау мүмкін болмады.",
       "not_found": "Жұмыс немесе сынып табылмады.",
@@ -159,7 +176,9 @@
       "invalid_status": "Мәртебе дұрыс емес.",
       "invalid_value": "Белсенділік 1-ден 10-ға дейін болуы керек.",
       "invalid_kind": "Жазба түрі дұрыс емес.",
-      "invalid_points": "Ұпай 0-ден 100-ге дейін болуы керек."
+      "invalid_points": "Ұпай 0-ден 100-ге дейін болуы керек.",
+      "invalid_grade": "Баға 2-ден 5-ке дейін болуы керек.",
+      "invalid_basis": "Ұсыныс негіздемесі дұрыс емес."
     }
   },
   "roles": {

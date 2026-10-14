@@ -13,12 +13,14 @@ import {
   isAssessmentStatus,
   isAssessmentType,
   isBehaviorKind,
+  isProposalBasis,
   isProposalStatus,
   isRoundingMode,
   type AssessmentStatus,
   type AssessmentType,
   type BehaviorKind,
   type GradingRules,
+  type ProposalBasis,
   type ProposalStatus,
 } from "./constants";
 import {
@@ -98,7 +100,7 @@ export interface StudentBehaviorRow {
 
 export interface StudentProposal {
   value: number;
-  basis: string;
+  basis: ProposalBasis;
   status: ProposalStatus;
 }
 
@@ -239,7 +241,7 @@ export async function getStudentDashboard(
     proposal: acceptedProposal
       ? {
           value: acceptedProposal.value,
-          basis: acceptedProposal.basis,
+          basis: isProposalBasis(acceptedProposal.basis) ? acceptedProposal.basis : "activity",
           status: "ACCEPTED",
         }
       : null,
@@ -430,6 +432,8 @@ export interface JournalStudent {
   activityAverage: number | null;
   behavior: BehaviorBalance;
   quarterGrade: number | null;
+  /** «Потенциальная оценка» по этому предмету и четверти, если учитель её создал. */
+  proposal: { value: number; basis: ProposalBasis; status: ProposalStatus } | null;
 }
 
 /** Запись активности для панели правки. `editable` — автор записи это текущий учитель. */
@@ -482,7 +486,7 @@ export async function getTeacherJournal(
   });
   if (!teaching) return null;
 
-  const [rules, assessments, sections, enrollments, activities, behaviors] =
+  const [rules, assessments, sections, enrollments, activities, behaviors, proposals] =
     await Promise.all([
       loadGradingRules(teaching.classId),
       db.assessment.findMany({
@@ -500,6 +504,9 @@ export async function getTeacherJournal(
       }),
       db.activityScore.findMany({ where: { subjectId: teaching.subjectId } }),
       db.behaviorRecord.findMany({ where: { classId: teaching.classId } }),
+      db.proposedGrade.findMany({
+        where: { subjectId: teaching.subjectId, quarter },
+      }),
     ]);
 
   const assessmentIds = assessments.map((a) => a.id);
@@ -521,6 +528,16 @@ export async function getTeacherJournal(
       maxScore: a.maxScore,
       status: isAssessmentStatus(a.status) ? a.status : "DRAFT",
     }));
+
+  const proposalByStudent = new Map<string, JournalStudent["proposal"]>();
+  for (const proposal of proposals) {
+    if (!isProposalStatus(proposal.status) || !isProposalBasis(proposal.basis)) continue;
+    proposalByStudent.set(proposal.studentId, {
+      value: proposal.value,
+      basis: proposal.basis,
+      status: proposal.status,
+    });
+  }
 
   const students: JournalStudent[] = enrollments.map(({ student }) => {
     const scores: Record<string, number | null> = {};
@@ -547,6 +564,7 @@ export async function getTeacherJournal(
       activityAverage: averageActivity(studentActivity.map((a) => a.value)),
       behavior: behaviorBalance(studentBehavior),
       quarterGrade: quarterGrade(parts, rules),
+      proposal: proposalByStudent.get(student.id) ?? null,
     };
   });
 

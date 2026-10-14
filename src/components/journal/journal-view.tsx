@@ -7,6 +7,7 @@ import type { JournalData } from "@/lib/queries";
 import { assessmentTypeBadgeClass, gradeBadgeClass } from "@/components/dashboard/badges";
 import { GradeCell } from "./grade-cell";
 import { GradeGridProvider } from "./grade-grid";
+import { ProposalCell } from "./proposal-cell";
 import { AssessmentActions } from "./assessment-actions";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { QuickActions } from "./quick-actions";
@@ -115,6 +116,7 @@ export async function JournalView({ data }: JournalViewProps) {
                     <th className="px-3 py-3 text-center">{t("activity")}</th>
                     <th className="px-3 py-3 text-center">{t("behavior")}</th>
                     <th className="px-3 py-3 text-center">{t("final")}</th>
+                    <th className="px-3 py-3 text-center">{t("proposal")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -163,6 +165,16 @@ export async function JournalView({ data }: JournalViewProps) {
                             {student.quarterGrade}
                           </Badge>
                         )}
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <ProposalCell
+                          teachingId={data.teaching.id}
+                          studentId={student.id}
+                          studentName={student.fullName}
+                          quarter={data.quarter}
+                          suggestion={student.quarterGrade}
+                          proposal={student.proposal}
+                        />
                       </td>
                     </tr>
                   ))}

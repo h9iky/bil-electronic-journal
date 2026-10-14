@@ -43,6 +43,10 @@ export const ACTIVITY_MAX = 10;
 export const GRADE_MIN = 2;
 export const GRADE_MAX = 5;
 
+/** Четверть — целое 1..4. */
+export const QUARTER_MIN = 1;
+export const QUARTER_MAX = 4;
+
 /** Пороги перевода процента в оценку: < three → 2, ≥ five → 5 и т.д. */
 export interface Thresholds {
   three: number;
@@ -96,3 +100,5 @@ export const isProposalBasis = (v: unknown): v is ProposalBasis =>
   isOneOf(PROPOSAL_BASES, v);
 export const isRoundingMode = (v: unknown): v is RoundingMode =>
   isOneOf(ROUNDING_MODES, v);
+export const isQuarter = (v: unknown): v is number =>
+  typeof v === "number" && Number.isInteger(v) && v >= QUARTER_MIN && v <= QUARTER_MAX;
