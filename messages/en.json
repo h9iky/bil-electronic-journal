@@ -134,6 +134,12 @@
     "commentPlaceholder": "Optional",
     "save": "Save",
     "saved": "Saved.",
+    "records": "Recent records",
+    "recordsDesc": "Activity and behaviour \u2014 with edit and delete.",
+    "noRecords": "No records yet.",
+    "edit": "Edit",
+    "deleteRecord": "Delete record",
+    "deleteRecordConfirm": "Delete this record?",
     "error": {
       "unknown": "The action could not be completed.",
       "not_found": "Work or class not found.",

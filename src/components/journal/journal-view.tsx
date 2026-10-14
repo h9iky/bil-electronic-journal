@@ -9,6 +9,7 @@ import { GradeCell } from "./grade-cell";
 import { AssessmentActions } from "./assessment-actions";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { QuickActions } from "./quick-actions";
+import { JournalRecords } from "./journal-records";
 
 interface JournalViewProps {
   data: JournalData;
@@ -166,6 +167,8 @@ export async function JournalView({ data }: JournalViewProps) {
           )}
         </CardContent>
       </Card>
+
+      <JournalRecords activities={data.activities} behaviors={data.behaviors} />
 
       <QuickActions
         teachingId={data.teaching.id}

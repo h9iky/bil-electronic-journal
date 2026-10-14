@@ -33,6 +33,9 @@ import {
 
 const EMPTY_GROUP = (): GroupScore => ({ sumScore: 0, sumMax: 0, count: 0 });
 
+/** Сколько последних записей активности/поведения показывать в панели правки. */
+const RECORDS_LIMIT = 40;
+
 /** Несданные работы (score = null) не искажают процент — их просто нет в группе. */
 function addToGroup(group: GroupScore, score: number | null, maxScore: number): void {
   if (score == null || maxScore <= 0) return;
@@ -429,6 +432,29 @@ export interface JournalStudent {
   quarterGrade: number | null;
 }
 
+/** Запись активности для панели правки. `editable` — автор записи это текущий учитель. */
+export interface JournalActivityRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  value: number;
+  comment: string | null;
+  date: Date;
+  editable: boolean;
+}
+
+/** Запись поведения для панели правки. */
+export interface JournalBehaviorRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  kind: BehaviorKind;
+  points: number;
+  comment: string | null;
+  date: Date;
+  editable: boolean;
+}
+
 export interface JournalData {
   teaching: TeacherTeachingOption;
   quarter: number;
@@ -436,6 +462,8 @@ export interface JournalData {
   sections: { id: string; title: string; order: number }[];
   assessments: JournalAssessment[];
   students: JournalStudent[];
+  activities: JournalActivityRecord[];
+  behaviors: JournalBehaviorRecord[];
 }
 
 /**
@@ -522,6 +550,40 @@ export async function getTeacherJournal(
     };
   });
 
+  const nameById = new Map(
+    enrollments.map(({ student }) => [student.id, student.fullName] as const),
+  );
+  const enrolledIds = new Set(nameById.keys());
+
+  const recentActivities: JournalActivityRecord[] = activities
+    .filter((a) => enrolledIds.has(a.studentId))
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, RECORDS_LIMIT)
+    .map((a) => ({
+      id: a.id,
+      studentId: a.studentId,
+      studentName: nameById.get(a.studentId) ?? "—",
+      value: a.value,
+      comment: a.comment,
+      date: a.date,
+      editable: a.teacherId === teacherId,
+    }));
+
+  const recentBehaviors: JournalBehaviorRecord[] = behaviors
+    .filter((b) => isBehaviorKind(b.kind))
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, RECORDS_LIMIT)
+    .map((b) => ({
+      id: b.id,
+      studentId: b.studentId,
+      studentName: nameById.get(b.studentId) ?? "—",
+      kind: b.kind as BehaviorKind,
+      points: b.points,
+      comment: b.comment,
+      date: b.date,
+      editable: b.teacherId === teacherId,
+    }));
+
   return {
     teaching: toTeachingOption(teaching),
     quarter,
@@ -529,6 +591,8 @@ export async function getTeacherJournal(
     sections: sections.map((s) => ({ id: s.id, title: s.title, order: s.order })),
     assessments: journalAssessments,
     students,
+    activities: recentActivities,
+    behaviors: recentBehaviors,
   };
 }
 

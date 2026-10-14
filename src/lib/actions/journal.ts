@@ -209,6 +209,9 @@ export async function deleteAssessment(input: {
 // Активность и поведение
 // ---------------------------------------------------------------------------
 
+/** Комментарий: обрезаем и превращаем пустую строку в `null`. */
+const cleanComment = (value?: string | null): string | null => value?.trim() || null;
+
 export async function saveActivity(input: {
   teachingId: string;
   studentId: string;
@@ -232,9 +235,45 @@ export async function saveActivity(input: {
       subjectId: teaching.subjectId,
       teacherId: teacher.id,
       value: input.value,
-      comment: input.comment?.trim() || null,
+      comment: cleanComment(input.comment),
     },
   });
+
+  refresh();
+  return ok;
+}
+
+/** Правка существующей записи активности — только своей. */
+export async function updateActivity(input: {
+  activityId: string;
+  value: number;
+  comment?: string | null;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  if (!isActivityInRange(input.value)) return fail("invalid_value");
+
+  const record = await db.activityScore.findFirst({
+    where: { id: input.activityId, teacherId: teacher.id },
+  });
+  if (!record) return fail("not_found");
+
+  await db.activityScore.update({
+    where: { id: record.id },
+    data: { value: input.value, comment: cleanComment(input.comment) },
+  });
+
+  refresh();
+  return ok;
+}
+
+export async function deleteActivity(input: { activityId: string }): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const record = await db.activityScore.findFirst({
+    where: { id: input.activityId, teacherId: teacher.id },
+  });
+  if (!record) return fail("not_found");
+
+  await db.activityScore.delete({ where: { id: record.id } });
 
   refresh();
   return ok;
@@ -268,9 +307,49 @@ export async function saveBehavior(input: {
       teacherId: teacher.id,
       kind: input.kind,
       points: input.points,
-      comment: input.comment?.trim() || null,
+      comment: cleanComment(input.comment),
     },
   });
+
+  refresh();
+  return ok;
+}
+
+/** Правка существующей записи поведения — только своей. */
+export async function updateBehavior(input: {
+  behaviorId: string;
+  kind: BehaviorKind;
+  points: number;
+  comment?: string | null;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  if (!isBehaviorKind(input.kind)) return fail("invalid_kind");
+  if (!Number.isInteger(input.points) || input.points < 0 || input.points > 100) {
+    return fail("invalid_points");
+  }
+
+  const record = await db.behaviorRecord.findFirst({
+    where: { id: input.behaviorId, teacherId: teacher.id },
+  });
+  if (!record) return fail("not_found");
+
+  await db.behaviorRecord.update({
+    where: { id: record.id },
+    data: { kind: input.kind, points: input.points, comment: cleanComment(input.comment) },
+  });
+
+  refresh();
+  return ok;
+}
+
+export async function deleteBehavior(input: { behaviorId: string }): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const record = await db.behaviorRecord.findFirst({
+    where: { id: input.behaviorId, teacherId: teacher.id },
+  });
+  if (!record) return fail("not_found");
+
+  await db.behaviorRecord.delete({ where: { id: record.id } });
 
   refresh();
   return ok;
