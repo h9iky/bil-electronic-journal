@@ -14,6 +14,7 @@ import {
   GRADE_MAX,
   GRADE_MIN,
   type GradingRules,
+  type ProposalStatus,
   type RoundingMode,
   type Thresholds,
 } from "./constants";
@@ -132,6 +133,25 @@ export function quarterGrade(
   const value = quarterPercent(parts, rules);
   if (value == null) return null;
   return gradeFromPercent(round(value, rules.rounding), rules.thresholds);
+}
+
+/**
+ * Итог четверти с учётом «потенциальной оценки».
+ *
+ * Осознанное решение проекта: **принятое предложение учителя напрямую
+ * подменяет** формульный итог (а не надстраивается над ним). Висящее
+ * (`PENDING`) или отклонённое (`REJECTED`) предложение на итог не влияет.
+ * Значение вне диапазона 2–5 игнорируем — лучше показать формулу, чем
+ * отдать ученику некорректную «оценку».
+ */
+export function effectiveQuarterGrade(
+  formulaGrade: number | null,
+  proposal: { value: number; status: ProposalStatus } | null | undefined,
+): number | null {
+  if (proposal?.status === "ACCEPTED" && isGradeInRange(proposal.value)) {
+    return proposal.value;
+  }
+  return formulaGrade;
 }
 
 /** Полугодовая = среднее процентов состоявшихся четвертей (1–2 и 3–4). */

@@ -29,6 +29,7 @@ import { formatDay, parseDay, todayIso } from "./day";
 import {
   averageActivity,
   behaviorBalance,
+  effectiveQuarterGrade,
   quarterGrade,
   quarterPercent,
   round,
@@ -188,6 +189,15 @@ export async function getStudentDashboard(
     subjectBlocks.set(assessment.subjectId, block);
   }
 
+  // Принятое предложение по предмету напрямую подменяет формульный итог —
+  // семантика описана в `effectiveQuarterGrade` (grading.ts).
+  const acceptedBySubject = new Map<string, { value: number; status: ProposalStatus }>();
+  for (const proposal of proposals) {
+    if (proposal.status === "ACCEPTED") {
+      acceptedBySubject.set(proposal.subjectId, { value: proposal.value, status: "ACCEPTED" });
+    }
+  }
+
   for (const block of subjectBlocks.values()) {
     const groups: Record<AssessmentType, GroupScore> = {
       FORMATIVE: EMPTY_GROUP(),
@@ -201,9 +211,9 @@ export async function getStudentDashboard(
       { sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE },
       rules,
     );
-    block.quarterGrade = quarterGrade(
-      { sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE },
-      rules,
+    block.quarterGrade = effectiveQuarterGrade(
+      quarterGrade({ sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE }, rules),
+      acceptedBySubject.get(block.subjectId),
     );
   }
 
@@ -362,7 +372,7 @@ export async function getTeacherDashboard(
         activityAverage: averageActivity(studentActivity.map((a) => a.value)),
         proposal: finalProposal,
         quarterPercent: quarterPercent(parts, rules),
-        quarterGrade: quarterGrade(parts, rules),
+        quarterGrade: effectiveQuarterGrade(quarterGrade(parts, rules), finalProposal),
       };
     });
 
@@ -558,6 +568,7 @@ export async function getTeacherJournal(
     const parts = { sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE };
     const studentActivity = activities.filter((a) => a.studentId === student.id);
     const studentBehavior = behaviors.filter((b) => b.studentId === student.id);
+    const studentProposal = proposalByStudent.get(student.id) ?? null;
 
     return {
       id: student.id,
@@ -566,8 +577,8 @@ export async function getTeacherJournal(
       scores,
       activityAverage: averageActivity(studentActivity.map((a) => a.value)),
       behavior: behaviorBalance(studentBehavior),
-      quarterGrade: quarterGrade(parts, rules),
-      proposal: proposalByStudent.get(student.id) ?? null,
+      quarterGrade: effectiveQuarterGrade(quarterGrade(parts, rules), studentProposal),
+      proposal: studentProposal,
     };
   });
 

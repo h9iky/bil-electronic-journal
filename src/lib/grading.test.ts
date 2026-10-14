@@ -4,6 +4,7 @@ import {
   average,
   averageActivity,
   behaviorBalance,
+  effectiveQuarterGrade,
   formatSigned,
   gradeFromGroupPercent,
   gradeFromPercent,
@@ -148,6 +149,28 @@ describe("quarterGrade", () => {
     expect(quarterGrade({ sas: group(18, 20, 1), sat: null }, rules())).toBe(5);
     expect(quarterGrade({ sas: group(13, 20, 1), sat: null }, rules())).toBe(4); // 65%
     expect(quarterGrade({}, rules())).toBeNull();
+  });
+});
+
+describe("effectiveQuarterGrade — принятое предложение подменяет итог", () => {
+  it("без предложения оставляет формульный итог", () => {
+    expect(effectiveQuarterGrade(4, null)).toBe(4);
+    expect(effectiveQuarterGrade(null, undefined)).toBeNull();
+  });
+
+  it("ACCEPTED напрямую подменяет итог (в т.ч. когда формулы нет)", () => {
+    expect(effectiveQuarterGrade(3, { value: 5, status: "ACCEPTED" })).toBe(5);
+    expect(effectiveQuarterGrade(null, { value: 4, status: "ACCEPTED" })).toBe(4);
+  });
+
+  it("PENDING и REJECTED на итог не влияют", () => {
+    expect(effectiveQuarterGrade(4, { value: 5, status: "PENDING" })).toBe(4);
+    expect(effectiveQuarterGrade(4, { value: 2, status: "REJECTED" })).toBe(4);
+  });
+
+  it("некорректное значение (вне 2–5) игнорируется — остаётся формула", () => {
+    expect(effectiveQuarterGrade(4, { value: 7, status: "ACCEPTED" })).toBe(4);
+    expect(effectiveQuarterGrade(4, { value: 1, status: "ACCEPTED" })).toBe(4);
   });
 });
 
