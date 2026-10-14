@@ -55,7 +55,7 @@ export default async function LoginPage({
                 <Sparkles className="h-6 w-6" />
               </div>
               <Badge variant="outline" className="mx-auto mb-2 px-3 py-0.5 text-xs font-semibold text-primary border-primary/30">
-                BIL Портал
+                {t("portalBadge")}
               </Badge>
               <CardTitle className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {t("title")}
@@ -68,7 +68,7 @@ export default async function LoginPage({
             <CardContent className="space-y-6 pt-2">
               {sp.error === "not_found" && (
                 <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-center text-xs font-medium text-destructive">
-                  Мұндай электрондық пошта тіркелмеген. Төмендегі дайын 1-Click демо-аккаунттарды таңдаңыз.
+                  {t("errorNotFound")}
                 </div>
               )}
 
@@ -79,7 +79,7 @@ export default async function LoginPage({
                     {t("demoTitle")}
                   </span>
                   <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                    1-Click Fast Access
+                    {t("demoFastAccess")}
                   </span>
                 </div>
 
@@ -104,7 +104,7 @@ export default async function LoginPage({
                             {t("asStudent")}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Бағалар • Белсенділік 1–10 • Тәртіп • Дневник
+                            {t("studentHint")}
                           </div>
                         </div>
                       </div>
@@ -132,7 +132,7 @@ export default async function LoginPage({
                             {t("asTeacher")}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Журнал • БЖБ / ТЖБ баллдары • Активность • Ұсыныстар
+                            {t("teacherHint")}
                           </div>
                         </div>
                       </div>
@@ -160,7 +160,7 @@ export default async function LoginPage({
                             {t("asAdmin")}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Мектеп құрылымы • Пайдаланушылар • Пәндер
+                            {t("adminHint")}
                           </div>
                         </div>
                       </div>
@@ -176,7 +176,7 @@ export default async function LoginPage({
                   <span className="w-full border-t border-border/80" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-3 text-muted-foreground">немесе email арқылы</span>
+                  <span className="bg-card px-3 text-muted-foreground">{t("orDivider")}</span>
                 </div>
               </div>
 

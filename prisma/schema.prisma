@@ -7,7 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Пользователь: ученик, учитель или админ (role: STUDENT | TEACHER | ADMIN).
+// ⚠️ SQLite не поддерживает enum. Все «перечисления» — это String,
+// валидируемые через src/lib/constants.ts (union-типы + type guards).
+
+/// Пользователь: ученик, учитель или админ. Роли — см. constants.ts: ROLES.
 model User {
   id        String   @id @default(cuid())
   fullName  String
@@ -33,7 +36,7 @@ model User {
   curatedClasses        Klass[]
 }
 
-/// Класс: "10А".
+/// Класс: "10А". Настройки оценивания — в отдельной таблице ClassSettings.
 model Klass {
   id        String  @id @default(cuid())
   name      String // "10А"
@@ -41,21 +44,34 @@ model Klass {
   curatorId String? // классный руководитель
 
   curator         User?            @relation(fields: [curatorId], references: [id])
+  settings        ClassSettings?
   enrollments     Enrollment[]
   teachings       Teaching[]
   assessments     Assessment[]
   behaviorRecords BehaviorRecord[]
+  proposedGrades  ProposedGrade[]
 }
 
-/// Предмет: "Математика".
-model Subject {
-  id             String           @id @default(cuid())
-  name           String
-  code           String
-  teachings      Teaching[]
-  assessments    Assessment[]
-  activityScores ActivityScore[]
-  proposedGrades ProposedGrade[]
+/// Настройки оценивания класса: веса, пороги, округление, лимиты работ.
+/// Хранятся в БД (а не в коде), потому что школы трактуют правила по-разному.
+model ClassSettings {
+  id        String @id @default(cuid())
+  classId   String @unique
+  // веса слагаемых четвертной (в процентах)
+  sasWeight       Int @default(50)
+  satWeight       Int @default(50)
+  formativeWeight Int @default(0)
+  // пороги перевода процента в оценку
+  thresholdThree Int @default(40)
+  thresholdFour  Int @default(65)
+  thresholdFive  Int @default(85)
+  // лимиты работ за четверть
+  maxSasPerQuarter Int @default(4)
+  maxSatPerQuarter Int @default(1)
+  // округление процентов/итогов: HALF_UP | FLOOR | CEIL | NONE
+  rounding String @default("HALF_UP")
+
+  klass Klass @relation(fields: [classId], references: [id])
 }
 
 /// Ученик состоит в классе.
@@ -84,25 +100,53 @@ model Teaching {
   @@unique([teacherId, subjectId, classId])
 }
 
-/// Работа: формативка, СОР или СОЧ (type). maxScore задаёт учитель — 5/10/20/30…
+/// Предмет: "Математика". Делится на разделы (Section) внутри четверти.
+model Subject {
+  id             String           @id @default(cuid())
+  name           String
+  code           String
+  teachings      Teaching[]
+  sections       Section[]
+  assessments    Assessment[]
+  activityScores ActivityScore[]
+  proposedGrades ProposedGrade[]
+}
+
+/// Раздел/глава программы внутри четверти. К нему привязаны работы SAS (СОР).
+model Section {
+  id        String @id @default(cuid())
+  subjectId String
+  quarter   Int // 1..4
+  title     String // "Тригонометриялық функциялар"
+  order     Int    @default(0)
+
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  assessments Assessment[]
+}
+
+/// Работа: FORMATIVE (текущая), SAS (за раздел), SAT (за четверть).
+/// maxScore задаёт учитель — 5/10/20/30…; status открывает работу ученикам.
 model Assessment {
   id        String   @id @default(cuid())
   classId   String
   subjectId String
   teacherId String
-  type      String // FORMATIVE | SOR | SOCH
+  type      String // FORMATIVE | SAS | SAT
+  status    String   @default("DRAFT") // DRAFT | PUBLISHED
+  sectionId String? // обязателен для SAS, null для остальных
   title     String
   date      DateTime @default(now())
   maxScore  Int
   quarter   Int // 1..4
 
-  klass   Klass   @relation(fields: [classId], references: [id])
-  subject Subject @relation(fields: [subjectId], references: [id])
-  teacher User    @relation("AssessmentsByTeacher", fields: [teacherId], references: [id])
+  klass   Klass    @relation(fields: [classId], references: [id])
+  subject Subject  @relation(fields: [subjectId], references: [id])
+  teacher User     @relation("AssessmentsByTeacher", fields: [teacherId], references: [id])
+  section Section? @relation(fields: [sectionId], references: [id])
   grades  Grade[]
 }
 
-/// Оценка ученика за работу. score = балл (может быть пусто).
+/// Оценка ученика за работу. score = балл (null = ещё не выставлен).
 model Grade {
   id           String   @id @default(cuid())
   assessmentId String
@@ -132,7 +176,7 @@ model ActivityScore {
   teacher User    @relation("TeacherActivityScores", fields: [teacherId], references: [id])
 }
 
-/// 🔥 Поведение — ОТДЕЛЬНАЯ категория (kind: POSITIVE | NEGATIVE | NEUTRAL).
+/// 🔥 Поведение — ОТДЕЛЬНАЯ категория (POSITIVE | NEGATIVE | NEUTRAL).
 /// Не смешивается с официальными оценками и активностью.
 model BehaviorRecord {
   id        String   @id @default(cuid())
@@ -141,20 +185,21 @@ model BehaviorRecord {
   teacherId String
   date      DateTime @default(now())
   kind      String // POSITIVE | NEGATIVE | NEUTRAL
-  points    Int      @default(0) // опциональный весовой балл
+  points    Int      @default(0) // модуль веса; знак берётся из kind
   comment   String?
 
-  student User    @relation("StudentBehaviorRecords", fields: [studentId], references: [id])
-  klass   Klass   @relation(fields: [classId], references: [id])
-  teacher User    @relation("TeacherBehaviorRecords", fields: [teacherId], references: [id])
+  student User @relation("StudentBehaviorRecords", fields: [studentId], references: [id])
+  klass   Klass @relation(fields: [classId], references: [id])
+  teacher User  @relation("TeacherBehaviorRecords", fields: [teacherId], references: [id])
 }
 
 /// 🔥 «Потенциальная оценка»: рекомендация учителя на основе активности/поведения.
-/// status: PENDING | ACCEPTED | REJECTED. Учитель сам решает, применять ли к итогу.
+/// status: PENDING | ACCEPTED | REJECTED. Влияет на итог только после ACCEPTED.
 model ProposedGrade {
   id          String @id @default(cuid())
   studentId   String
   subjectId   String
+  classId     String
   quarter     Int
   value       Int // 2..5
   basis       String @default("activity") // activity | behavior
@@ -163,5 +208,8 @@ model ProposedGrade {
 
   student User    @relation("ProposedForStudent", fields: [studentId], references: [id])
   subject Subject @relation(fields: [subjectId], references: [id])
+  klass   Klass   @relation(fields: [classId], references: [id])
   creator User    @relation("ProposedByTeacher", fields: [createdById], references: [id])
+
+  @@unique([studentId, subjectId, quarter, basis])
 }

@@ -12,6 +12,9 @@
     "login": "Жүйеге кіру",
     "dashboard": "Жеке кабинет",
     "comingSoon": "Бөлім әзірленуде",
+    "bulletGrades": "БЖБ/ТЖБ есептеуі",
+    "bulletActivity": "Белсенділік 1–10",
+    "bulletBehavior": "Тәртіп санаты",
     "features": {
       "gradesTitle": "Бағалар және БЖБ/ТЖБ",
       "gradesText": "Мұғалім максимумды өзі қояды — 10, 20, 30. Пайыздар мен тоқсандық баға автоматты есептеледі.",
@@ -33,7 +36,14 @@
     "asStudent": "Оқушы (Арман Қайрат • 10А)",
     "asTeacher": "Мұғалім (Бақыт Нұрлан • Математика)",
     "asAdmin": "Әкімші (Серік Ахметов)",
-    "securityNote": "Рөлдер жүйесі сервер деңгейінде тексеріледі"
+    "securityNote": "Рөлдер жүйесі сервер деңгейінде тексеріледі",
+    "errorNotFound": "Мұндай электрондық пошта тіркелмеген. Төмендегі дайын демо-аккаунтты таңдаңыз.",
+    "portalBadge": "BIL Портал",
+    "demoFastAccess": "1-Click жылдам кіру",
+    "studentHint": "Бағалар • Белсенділік 1–10 • Тәртіп • Күнделік",
+    "teacherHint": "Журнал • БЖБ/ТЖБ балдары • Белсенділік • Ұсыныстар",
+    "adminHint": "Мектеп құрылымы • Пайдаланушылар • Пәндер",
+    "orDivider": "немесе email арқылы"
   },
   "dashboard": {
     "welcome": "Қош келдіңіз",
@@ -43,32 +53,79 @@
     "adminTitle": "Әкімшінің басқару панелі",
     "class": "Сынып",
     "gradesOverview": "Оқу үлгерімі және бағалар",
+    "overallProgress": "Жалпы үлгерім",
+    "overallProgressDesc": "Барлық пәндер бойынша орташа пайыз",
     "activityMetric": "Белсенділік көрсеткіші",
+    "activityDesc": "Сабақтағы белсенділік (1–10)",
     "behaviorMetric": "Тәртіп жазбалары",
-    "potentialGrade": "Потенциалды ұсынылған баға",
-    "activityDesc": "Сабақтағы белсенділік пен ынта бойынша (1-ден 10-ға дейін)",
     "behaviorDesc": "Тәртіп пен мектеп мәдениетінің бөлек есебі",
-    "potentialGradeDesc": "Мұғалімнің белсенділік пен тәртіпке негізделген ресми ұсынысы",
+    "behaviorNet": "Тәртіп балансы",
+    "behaviorRecordsCount": "{count} жазба",
+    "potentialGrade": "Потенциалды баға",
+    "potentialGradeDesc": "Мұғалімнің белсенділік пен тәртіпке негізделген ұсынысы",
+    "noProposal": "Ұсыныс жоқ",
+    "noGrades": "Әзірге баға жоқ",
     "subject": "Пән",
     "type": "Түрі",
     "score": "Балл",
     "maxScore": "Максимум",
     "percent": "Пайыз",
     "date": "Күні",
-    "status": "Күйі",
-    "action": "Әрекет",
+    "comment": "Пікір",
     "myClasses": "Менің сыныптарым",
-    "mySubjects": "Оқытылатын пәндер",
-    "studentsCount": "Оқушылар саны",
-    "quickActions": "Жылдам әрекеттер",
-    "systemStats": "Жүйе статистикасы",
+    "attachedClasses": "Бекітілген сыныптар",
+    "contingent": "Оқушылар контингенті",
+    "contingentDesc": "Осы тоқсанда тіркелген",
+    "proposals": "Потенциалды ұсыныстар",
+    "proposalsDesc": "Қабылданған ұсыныстар саны",
+    "addWork": "+ БЖБ/ТЖБ қосу",
+    "openJournal": "Журналды ашу",
+    "studentsCount": "{count} оқушы",
+    "studentsLabel": "Оқушылар",
+    "noStudents": "Бұл сыныпта әлі оқушылар жоқ",
+    "weightsLabel": "Салмақтар",
+    "finalGrade": "Қорытынды",
+    "quarterLabel": "1-тоқсан",
+    "sasShort": "БЖБ",
+    "satShort": "ТЖБ",
+    "activityShort": "Белсенділік",
     "totalUsers": "Барлық пайдаланушылар",
     "totalClasses": "Сыныптар",
-    "totalSubjects": "Пәндер"
+    "totalSubjects": "Пәндер",
+    "usersTitle": "Жүйе пайдаланушылары",
+    "usersDesc": "Барлық тіркелген аккаунттар мен олардың рөлдері",
+    "name": "Аты-жөні",
+    "email": "Email",
+    "registeredAt": "Тіркелген күні",
+    "classesList": "Сыныптар тізімі",
+    "subjectsList": "Пәндер тізімі"
   },
   "roles": {
     "student": "Оқушы",
     "teacher": "Мұғалім",
     "admin": "Әкімші"
+  },
+  "assessmentType": {
+    "FORMATIVE": "Формативті",
+    "SAS": "БЖБ (SAS)",
+    "SAT": "ТЖБ (SAT)"
+  },
+  "assessmentStatus": {
+    "DRAFT": "Жоба",
+    "PUBLISHED": "Жарияланды"
+  },
+  "behavior": {
+    "POSITIVE": "Мадақтау",
+    "NEGATIVE": "Ескерту",
+    "NEUTRAL": "Бейтарап"
+  },
+  "proposalStatus": {
+    "PENDING": "Қаралуда",
+    "ACCEPTED": "Мақұлданды",
+    "REJECTED": "Қабылданбады"
+  },
+  "proposalBasis": {
+    "activity": "Белсенділік",
+    "behavior": "Тәртіп"
   }
 }

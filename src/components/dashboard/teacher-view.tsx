@@ -1,162 +1,193 @@
+import { getTranslations } from "next-intl/server";
+import { BookOpen, Layers, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-export interface TeacherStudentItem {
-  id: string;
-  fullName: string;
-  email: string;
-  sorScore: string;
-  sochScore: string;
-  activityScore: string;
-  finalGrade: string;
-}
-
-export interface TeacherClassItem {
-  id: string;
-  className: string;
-  subjectName: string;
-  students: TeacherStudentItem[];
-}
+import { groupPercent, round, type GroupScore } from "@/lib/grading";
+import type { TeacherClassBlock } from "@/lib/queries";
+import { gradeBadgeClass } from "./badges";
 
 interface TeacherViewProps {
-  teachings: TeacherClassItem[];
+  blocks: TeacherClassBlock[];
 }
 
-export function TeacherView({ teachings }: TeacherViewProps) {
-  const currentClass = teachings[0];
-  const students = currentClass?.students || [];
+/** «18/20 (90%)» или «—», если работ этого типа ещё нет. */
+function formatGroup(group: GroupScore): string {
+  if (group.count === 0) return "—";
+  const pct = groupPercent(group);
+  return `${group.sumScore}/${group.sumMax} (${pct == null ? "—" : round(pct)}%)`;
+}
+
+export async function TeacherView({ blocks }: TeacherViewProps) {
+  const t = await getTranslations("dashboard");
+  const tStatus = await getTranslations("proposalStatus");
+
+  const uniqueStudents = new Set(blocks.flatMap((b) => b.students.map((s) => s.id)));
+  const acceptedProposals = blocks
+    .flatMap((b) => b.students)
+    .filter((s) => s.proposal?.status === "ACCEPTED").length;
 
   return (
     <div className="space-y-8">
-      {/* 3 Сводные карточки учителя */}
+      {/* Сводка по учителю */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              Бекітілген сыныптар
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
+                {t("attachedClasses")}
+              </CardTitle>
+              <Layers className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{blocks.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {blocks.map((b) => `${b.className} · ${b.subjectName}`).join(", ") || "—"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
+                {t("contingent")}
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {currentClass ? `${currentClass.className} сыныбы` : "Сынып жоқ"}
+              {t("studentsCount", { count: uniqueStudents.size })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {currentClass ? currentClass.subjectName : "Пән бекітілмеген"}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{t("contingentDesc")}</p>
           </CardContent>
         </Card>
 
         <Card className="border-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              Оқушылар контингенті
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{students.length} оқушы</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              1-тоқсан бойынша тіркелген
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              Потенциалды ұсыныстар
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
-              {students.filter((s) => s.finalGrade !== "—").length} белсенді
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
+                {t("proposals")}
+              </CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Белсенділік негізінде қорытылды
-            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {acceptedProposals}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{t("proposalsDesc")}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Журнал класса */}
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle className="text-lg font-bold">
-            {currentClass?.className} Сыныбы — Пән журналы
-          </CardTitle>
-          <CardDescription>
-            Оқушылар тізімі, бағалар қою және белсенділік пен тәртіпті белгілеу
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-border/80 overflow-hidden">
-            <div className="p-4 bg-muted/30 border-b flex items-center justify-between flex-wrap gap-3">
+      {/* Журналы по каждому классу/предмету учителя */}
+      {blocks.map((block) => (
+        <Card key={block.teachingId} className="border-border/60">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <span className="font-semibold text-sm">
-                  Сынып: {currentClass?.className}
-                </span>
-                <span className="text-muted-foreground text-xs ml-3">
-                  Пән: {currentClass?.subjectName} • Оқушылар: {students.length}
-                </span>
+                <CardTitle className="text-lg font-bold">
+                  {block.className} — {block.subjectName}
+                </CardTitle>
+                <CardDescription>
+                  {t("weightsLabel")}: {t("sasShort")} {block.rules.weights.sas}% / {t("satShort")}{" "}
+                  {block.rules.weights.sat}%
+                </CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" className="text-xs cursor-pointer">
-                  + БЖБ/ТЖБ қосу
+                  {t("addWork")}
                 </Button>
                 <Button size="sm" className="text-xs cursor-pointer">
-                  Журналды ашу
+                  {t("openJournal")}
                 </Button>
               </div>
             </div>
-
-            {/* Список реальных учеников из базы данных */}
-            <div className="p-4 space-y-3">
-              {students.length === 0 ? (
-                <div className="py-6 text-center text-xs text-muted-foreground">
-                  Бұл сыныпта әлі оқушылар жоқ
-                </div>
-              ) : (
-                students.map((student) => {
-                  const initials = student.fullName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2);
-
-                  return (
-                    <div
-                      key={student.id}
-                      className="flex items-center justify-between text-sm py-2 border-b border-border/40 last:border-b-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase">
-                          {initials}
-                        </div>
-                        <div>
-                          <div className="font-semibold">{student.fullName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {student.email}
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            {block.students.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("noStudents")}</p>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
+                  <tr>
+                    <th className="py-3 px-4">{t("studentsLabel")}</th>
+                    <th className="py-3 px-4">{t("sasShort")}</th>
+                    <th className="py-3 px-4">{t("satShort")}</th>
+                    <th className="py-3 px-4">{t("activityShort")}</th>
+                    <th className="py-3 px-4">{t("percent")}</th>
+                    <th className="py-3 px-4">{t("finalGrade")}</th>
+                    <th className="py-3 px-4">{t("proposals")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {block.students.map((student) => {
+                    const initials = student.fullName
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")
+                      .slice(0, 2);
+                    return (
+                      <tr key={student.id} className="hover:bg-muted/20 transition">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase">
+                              {initials}
+                            </div>
+                            <div>
+                              <div className="font-semibold">{student.fullName}</div>
+                              <div className="text-xs text-muted-foreground">{student.email}</div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs font-mono">
-                        <span>БЖБ: {student.sorScore}</span>
-                        <span>ТЖБ: {student.sochScore}</span>
-                        <span className="text-primary font-bold">
-                          Белсенділік: {student.activityScore}
-                        </span>
-                        <Badge variant="secondary" className="font-sans text-[11px]">
-                          Қорытынды: {student.finalGrade}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs">{formatGroup(student.sas)}</td>
+                        <td className="py-3 px-4 font-mono text-xs">{formatGroup(student.sat)}</td>
+                        <td className="py-3 px-4 text-xs font-semibold text-primary">
+                          {student.activityAverage == null
+                            ? "—"
+                            : `${round(student.activityAverage, "HALF_UP", 1)}/10`}
+                        </td>
+                        <td className="py-3 px-4 text-xs font-semibold">
+                          {student.quarterPercent == null
+                            ? "—"
+                            : `${round(student.quarterPercent)}%`}
+                        </td>
+                        <td className="py-3 px-4">
+                          {student.quarterGrade == null ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs font-bold ${gradeBadgeClass(student.quarterGrade).badge}`}
+                            >
+                              {student.quarterGrade}
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {student.proposal == null ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold">{student.proposal.value}</span>
+                              <Badge variant="outline" className="text-[10px]">
+                                {tStatus(student.proposal.status)}
+                              </Badge>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

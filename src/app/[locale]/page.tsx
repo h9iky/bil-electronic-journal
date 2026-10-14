@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { getCurrentUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import {
   School,
   TrendingUp,
@@ -24,7 +24,7 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await getCurrentUser();
+  const user = await getSessionUser();
   const t = await getTranslations("landing");
   const tc = await getTranslations("common");
 
@@ -136,15 +136,15 @@ export default async function HomePage({
           <div className="pt-2 flex items-center justify-center gap-6 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              БЖБ / ТЖБ есептеуі
+              {t("bulletGrades")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              Белсенділік 1–10
+              {t("bulletActivity")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              Тәртіп санаты
+              {t("bulletBehavior")}
             </span>
           </div>
         </section>

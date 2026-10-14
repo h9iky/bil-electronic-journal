@@ -1,120 +1,94 @@
+import { getTranslations } from "next-intl/server";
+import { Layers, BookOpen, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-export interface AdminUserItem {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  createdAt: Date;
-}
+import { isRole, type Role } from "@/lib/constants";
+import type { AdminDashboard } from "@/lib/queries";
 
 interface AdminViewProps {
-  totalUsers: number;
-  totalClasses: number;
-  totalSubjects: number;
-  users: AdminUserItem[];
-  t: (key: string) => string;
-  tr: (key: "student" | "teacher" | "admin") => string;
+  data: AdminDashboard;
 }
 
-export function AdminView({
-  totalUsers,
-  totalClasses,
-  totalSubjects,
-  users,
-  t,
-  tr,
-}: AdminViewProps) {
+const ROLE_BADGE_VARIANT: Record<Role, "default" | "secondary" | "destructive"> = {
+  ADMIN: "destructive",
+  TEACHER: "default",
+  STUDENT: "secondary",
+};
+
+export async function AdminView({ data }: AdminViewProps) {
+  const t = await getTranslations("dashboard");
+  const tRoles = await getTranslations("roles");
+
+  const cards = [
+    { title: t("totalUsers"), value: data.totalUsers, icon: Users, hint: null },
+    {
+      title: t("totalClasses"),
+      value: data.totalClasses,
+      icon: Layers,
+      hint: data.classNames.join(", ") || "—",
+    },
+    {
+      title: t("totalSubjects"),
+      value: data.totalSubjects,
+      icon: BookOpen,
+      hint: data.subjectNames.join(", ") || "—",
+    },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* 3 Карточки статистики всей школы */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              {t("totalUsers")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalUsers}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Оқушылар, мұғалімдер және әкімшілер
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              {t("totalClasses")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalClasses}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              10А (2025/2026 оқу жылы)
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
-              {t("totalSubjects")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalSubjects}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Алгебра, Физика, Информатика
-            </p>
-          </CardContent>
-        </Card>
+        {cards.map(({ title, value, icon: Icon, hint }) => (
+          <Card key={title} className="border-border/60">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs uppercase font-semibold text-muted-foreground">
+                  {title}
+                </CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{hint ?? t("usersDesc")}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Таблица пользователей системы */}
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">Жүйе пайдаланушылары</CardTitle>
-          <CardDescription>
-            Барлық тіркелген аккаунттар мен олардың рөлдері
-          </CardDescription>
+          <CardTitle className="text-lg font-bold">{t("usersTitle")}</CardTitle>
+          <CardDescription>{t("usersDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase">
               <tr>
-                <th className="py-3 px-4">Аты-жөні</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Рөл</th>
-                <th className="py-3 px-4">Тіркелген күні</th>
+                <th className="py-3 px-4">{t("name")}</th>
+                <th className="py-3 px-4">{t("email")}</th>
+                <th className="py-3 px-4">{t("role")}</th>
+                <th className="py-3 px-4">{t("registeredAt")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
-              {users.map((u) => (
-                <tr key={u.id} className="hover:bg-muted/20 transition">
-                  <td className="py-3 px-4 font-semibold">{u.fullName}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{u.email}</td>
-                  <td className="py-3 px-4">
-                    <Badge
-                      variant={
-                        u.role === "ADMIN"
-                          ? "destructive"
-                          : u.role === "TEACHER"
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="text-xs"
-                    >
-                      {tr(u.role.toLowerCase() as "student" | "teacher" | "admin")}
-                    </Badge>
-                  </td>
-                  <td className="py-3 px-4 text-xs text-muted-foreground">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
+              {data.users.map((user) => {
+                const role: Role = isRole(user.role) ? user.role : "STUDENT";
+                return (
+                  <tr key={user.id} className="hover:bg-muted/20 transition">
+                    <td className="py-3 px-4 font-semibold">{user.fullName}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
+                    <td className="py-3 px-4">
+                      <Badge variant={ROLE_BADGE_VARIANT[role]} className="text-xs">
+                        {tRoles(role.toLowerCase())}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardContent>
