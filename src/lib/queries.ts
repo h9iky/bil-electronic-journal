@@ -10,10 +10,12 @@ import { db } from "./db";
 import {
   DEFAULT_ROUNDING,
   DEFAULT_RULES,
+  isAssessmentStatus,
   isAssessmentType,
   isBehaviorKind,
   isProposalStatus,
   isRoundingMode,
+  type AssessmentStatus,
   type AssessmentType,
   type BehaviorKind,
   type GradingRules,
@@ -366,6 +368,168 @@ export async function getTeacherDashboard(
       students,
     };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Журнал учителя (класс × предмет × четверть)
+// ---------------------------------------------------------------------------
+
+export interface TeacherTeachingOption {
+  id: string;
+  classId: string;
+  className: string;
+  subjectId: string;
+  subjectName: string;
+}
+
+/** Короткий список «класс — предмет» для переключателя в журнале. */
+export async function getTeacherTeachings(
+  teacherId: string,
+): Promise<TeacherTeachingOption[]> {
+  const teachings = await db.teaching.findMany({
+    where: { teacherId },
+    include: { klass: true, subject: true },
+    orderBy: [{ klass: { name: "asc" } }, { subject: { name: "asc" } }],
+  });
+  return teachings.map(toTeachingOption);
+}
+
+function toTeachingOption(teaching: {
+  id: string;
+  classId: string;
+  subjectId: string;
+  klass: { name: string };
+  subject: { name: string };
+}): TeacherTeachingOption {
+  return {
+    id: teaching.id,
+    classId: teaching.classId,
+    className: teaching.klass.name,
+    subjectId: teaching.subjectId,
+    subjectName: teaching.subject.name,
+  };
+}
+
+export interface JournalAssessment {
+  id: string;
+  type: AssessmentType;
+  title: string;
+  maxScore: number;
+  status: AssessmentStatus;
+}
+
+export interface JournalStudent {
+  id: string;
+  fullName: string;
+  email: string;
+  /** Балл по работе: `scores[assessmentId]` (null = не выставлен). */
+  scores: Record<string, number | null>;
+  activityAverage: number | null;
+  behavior: BehaviorBalance;
+  quarterGrade: number | null;
+}
+
+export interface JournalData {
+  teaching: TeacherTeachingOption;
+  quarter: number;
+  rules: GradingRules;
+  sections: { id: string; title: string; order: number }[];
+  assessments: JournalAssessment[];
+  students: JournalStudent[];
+}
+
+/**
+ * Полный журнал одного преподавания за четверть: работы (колонки),
+ * ученики (строки) и матрица баллов. Доступен только «своему» учителю —
+ * иначе `null`, и страница честно покажет 404-подобную заглушку.
+ */
+export async function getTeacherJournal(
+  teacherId: string,
+  teachingId: string,
+  quarter = 1,
+): Promise<JournalData | null> {
+  const teaching = await db.teaching.findFirst({
+    where: { id: teachingId, teacherId },
+    include: { klass: true, subject: true },
+  });
+  if (!teaching) return null;
+
+  const [rules, assessments, sections, enrollments, activities, behaviors] =
+    await Promise.all([
+      loadGradingRules(teaching.classId),
+      db.assessment.findMany({
+        where: { classId: teaching.classId, subjectId: teaching.subjectId, quarter },
+        orderBy: [{ type: "asc" }, { date: "asc" }],
+      }),
+      db.section.findMany({
+        where: { subjectId: teaching.subjectId, quarter },
+        orderBy: { order: "asc" },
+      }),
+      db.enrollment.findMany({
+        where: { classId: teaching.classId },
+        include: { student: true },
+        orderBy: { student: { fullName: "asc" } },
+      }),
+      db.activityScore.findMany({ where: { subjectId: teaching.subjectId } }),
+      db.behaviorRecord.findMany({ where: { classId: teaching.classId } }),
+    ]);
+
+  const assessmentIds = assessments.map((a) => a.id);
+  const grades = assessmentIds.length
+    ? await db.grade.findMany({ where: { assessmentId: { in: assessmentIds } } })
+    : [];
+
+  const scoreByKey = new Map<string, number | null>();
+  for (const grade of grades) {
+    scoreByKey.set(`${grade.assessmentId}|${grade.studentId}`, grade.score);
+  }
+
+  const journalAssessments: JournalAssessment[] = assessments
+    .filter((a) => isAssessmentType(a.type))
+    .map((a) => ({
+      id: a.id,
+      type: a.type as AssessmentType,
+      title: a.title,
+      maxScore: a.maxScore,
+      status: isAssessmentStatus(a.status) ? a.status : "DRAFT",
+    }));
+
+  const students: JournalStudent[] = enrollments.map(({ student }) => {
+    const scores: Record<string, number | null> = {};
+    const groups: Record<AssessmentType, GroupScore> = {
+      FORMATIVE: EMPTY_GROUP(),
+      SAS: EMPTY_GROUP(),
+      SAT: EMPTY_GROUP(),
+    };
+    for (const assessment of journalAssessments) {
+      const score = scoreByKey.get(`${assessment.id}|${student.id}`) ?? null;
+      scores[assessment.id] = score;
+      addToGroup(groups[assessment.type], score, assessment.maxScore);
+    }
+
+    const parts = { sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE };
+    const studentActivity = activities.filter((a) => a.studentId === student.id);
+    const studentBehavior = behaviors.filter((b) => b.studentId === student.id);
+
+    return {
+      id: student.id,
+      fullName: student.fullName,
+      email: student.email,
+      scores,
+      activityAverage: averageActivity(studentActivity.map((a) => a.value)),
+      behavior: behaviorBalance(studentBehavior),
+      quarterGrade: quarterGrade(parts, rules),
+    };
+  });
+
+  return {
+    teaching: toTeachingOption(teaching),
+    quarter,
+    rules,
+    sections: sections.map((s) => ({ id: s.id, title: s.title, order: s.order })),
+    assessments: journalAssessments,
+    students,
+  };
 }
 
 // ---------------------------------------------------------------------------

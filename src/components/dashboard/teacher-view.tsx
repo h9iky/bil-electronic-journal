@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { BookOpen, Layers, Users } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { cn } from "cn";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { groupPercent, round, type GroupScore } from "@/lib/grading";
 import type { TeacherClassBlock } from "@/lib/queries";
 import { gradeBadgeClass } from "./badges";
@@ -98,12 +100,15 @@ export async function TeacherView({ blocks }: TeacherViewProps) {
                 </CardDescription>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="text-xs cursor-pointer">
-                  {t("addWork")}
-                </Button>
-                <Button size="sm" className="text-xs cursor-pointer">
+                <Link
+                  href={{
+                    pathname: "/dashboard/journal",
+                    query: { teaching: block.teachingId },
+                  }}
+                  className={cn(buttonVariants({ size: "sm" }), "text-xs")}
+                >
                   {t("openJournal")}
-                </Button>
+                </Link>
               </div>
             </div>
           </CardHeader>

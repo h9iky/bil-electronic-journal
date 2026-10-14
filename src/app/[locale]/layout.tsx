@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BIL — Электронный журнал",
   description:
-    "BIL — электронный журнал школы: оценки, СОР/СОЧ, активность, поведение.",
+    "BIL — электронный журнал школы: оценки, SAS/SAT, активность, поведение.",
 };
 
 export function generateStaticParams() {
