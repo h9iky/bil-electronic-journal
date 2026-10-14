@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { saveActivity, saveBehavior } from "@/lib/actions/journal";
+import { useToast } from "@/components/ui/toast";
 import {
   ACTIVITY_MAX,
   ACTIVITY_MIN,
@@ -36,11 +37,10 @@ export function QuickActions({ teachingId, students }: QuickActionsProps) {
   const [behaviorComment, setBehaviorComment] = useState("");
 
   const [pending, startTransition] = useTransition();
-  const [notice, setNotice] = useState<string | null>(null);
+  const { toast } = useToast();
 
   function addActivity(event: FormEvent) {
     event.preventDefault();
-    setNotice(null);
     startTransition(async () => {
       const result = await saveActivity({
         teachingId,
@@ -50,16 +50,15 @@ export function QuickActions({ teachingId, students }: QuickActionsProps) {
       });
       if (result.ok) {
         setActivityComment("");
-        setNotice(t("saved"));
+        toast(t("saved"));
       } else {
-        setNotice(t(`error.${result.error ?? "unknown"}`));
+        toast(t(`error.${result.error ?? "unknown"}`), "error");
       }
     });
   }
 
   function addBehavior(event: FormEvent) {
     event.preventDefault();
-    setNotice(null);
     startTransition(async () => {
       const result = await saveBehavior({
         teachingId,
@@ -70,9 +69,9 @@ export function QuickActions({ teachingId, students }: QuickActionsProps) {
       });
       if (result.ok) {
         setBehaviorComment("");
-        setNotice(t("saved"));
+        toast(t("saved"));
       } else {
-        setNotice(t(`error.${result.error ?? "unknown"}`));
+        toast(t(`error.${result.error ?? "unknown"}`), "error");
       }
     });
   }
@@ -210,10 +209,6 @@ export function QuickActions({ teachingId, students }: QuickActionsProps) {
           </form>
         </CardContent>
       </Card>
-
-      {notice && (
-        <p className="text-xs font-medium text-muted-foreground lg:col-span-2">{notice}</p>
-      )}
     </div>
   );
 }

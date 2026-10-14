@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteAssessment, setAssessmentStatus } from "@/lib/actions/journal";
+import { useToast } from "@/components/ui/toast";
 import type { AssessmentStatus } from "@/lib/constants";
 
 interface AssessmentActionsProps {
@@ -21,18 +22,26 @@ export function AssessmentActions({
 }: AssessmentActionsProps) {
   const t = useTranslations("journal");
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   function toggle() {
     const next: AssessmentStatus = status === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
     startTransition(async () => {
-      await setAssessmentStatus({ assessmentId, status: next });
+      const result = await setAssessmentStatus({ assessmentId, status: next });
+      if (result.ok) {
+        toast(next === "PUBLISHED" ? t("published") : t("unpublished"));
+      } else {
+        toast(t(`error.${result.error ?? "unknown"}`), "error");
+      }
     });
   }
 
   function remove() {
     if (!window.confirm(t("deleteConfirm", { title }))) return;
     startTransition(async () => {
-      await deleteAssessment({ assessmentId });
+      const result = await deleteAssessment({ assessmentId });
+      if (result.ok) toast(t("deleted"));
+      else toast(t(`error.${result.error ?? "unknown"}`), "error");
     });
   }
 

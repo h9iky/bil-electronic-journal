@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createAssessment } from "@/lib/actions/journal";
+import { useToast } from "@/components/ui/toast";
 import {
   ASSESSMENT_TYPES,
   type AssessmentType,
@@ -36,12 +37,11 @@ export function NewAssessmentForm({
   const [title, setTitle] = useState("");
   const [maxScore, setMaxScore] = useState("20");
   const [sectionId, setSectionId] = useState(sections[0]?.id ?? "");
-  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
 
     startTransition(async () => {
       const result = await createAssessment({
@@ -54,8 +54,9 @@ export function NewAssessmentForm({
       });
       if (result.ok) {
         setTitle("");
+        toast(t("created"));
       } else {
-        setError(t(`error.${result.error ?? "unknown"}`));
+        toast(t(`error.${result.error ?? "unknown"}`), "error");
       }
     });
   }
@@ -137,10 +138,6 @@ export function NewAssessmentForm({
         <Plus className="h-4 w-4" />
         {t("create")}
       </Button>
-
-      {error && (
-        <p className="w-full text-xs font-medium text-destructive">{error}</p>
-      )}
     </form>
   );
 }

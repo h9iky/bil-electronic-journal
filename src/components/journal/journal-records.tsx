@@ -7,12 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  deleteActivity,
-  deleteBehavior,
-  updateActivity,
-  updateBehavior,
-} from "@/lib/actions/journal";
+import { deleteActivity, deleteBehavior, updateActivity, updateBehavior } from "@/lib/actions/journal";
+import { useToast } from "@/components/ui/toast";
 import {
   ACTIVITY_MAX,
   ACTIVITY_MIN,
@@ -89,8 +85,8 @@ function ActivityRow({ record }: { record: JournalActivityRecord }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(record.value));
   const [comment, setComment] = useState(record.comment ?? "");
-  const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   function reset() {
     setValue(String(record.value));
@@ -100,7 +96,6 @@ function ActivityRow({ record }: { record: JournalActivityRecord }) {
 
   function save(event: FormEvent) {
     event.preventDefault();
-    setNotice(null);
     startTransition(async () => {
       const result = await updateActivity({
         activityId: record.id,
@@ -109,19 +104,19 @@ function ActivityRow({ record }: { record: JournalActivityRecord }) {
       });
       if (result.ok) {
         setEditing(false);
-        setNotice(t("saved"));
+        toast(t("saved"));
       } else {
-        setNotice(t(`error.${result.error ?? "unknown"}`));
+        toast(t(`error.${result.error ?? "unknown"}`), "error");
       }
     });
   }
 
   function remove() {
     if (!window.confirm(t("deleteRecordConfirm"))) return;
-    setNotice(null);
     startTransition(async () => {
       const result = await deleteActivity({ activityId: record.id });
-      if (!result.ok) setNotice(t(`error.${result.error ?? "unknown"}`));
+      if (result.ok) toast(t("deleted"));
+      else toast(t(`error.${result.error ?? "unknown"}`), "error");
     });
   }
 
@@ -180,7 +175,6 @@ function ActivityRow({ record }: { record: JournalActivityRecord }) {
           )}
         </div>
       )}
-      {notice && <p className="pt-1 text-[10px] text-muted-foreground">{notice}</p>}
     </li>
   );
 }
@@ -193,8 +187,8 @@ function BehaviorRow({ record }: { record: JournalBehaviorRecord }) {
   const [kind, setKind] = useState<BehaviorKind>(record.kind);
   const [points, setPoints] = useState(String(record.points));
   const [comment, setComment] = useState(record.comment ?? "");
-  const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const signed = record.kind === "NEGATIVE" ? -record.points : record.points;
 
@@ -207,7 +201,6 @@ function BehaviorRow({ record }: { record: JournalBehaviorRecord }) {
 
   function save(event: FormEvent) {
     event.preventDefault();
-    setNotice(null);
     startTransition(async () => {
       const result = await updateBehavior({
         behaviorId: record.id,
@@ -217,19 +210,19 @@ function BehaviorRow({ record }: { record: JournalBehaviorRecord }) {
       });
       if (result.ok) {
         setEditing(false);
-        setNotice(t("saved"));
+        toast(t("saved"));
       } else {
-        setNotice(t(`error.${result.error ?? "unknown"}`));
+        toast(t(`error.${result.error ?? "unknown"}`), "error");
       }
     });
   }
 
   function remove() {
     if (!window.confirm(t("deleteRecordConfirm"))) return;
-    setNotice(null);
     startTransition(async () => {
       const result = await deleteBehavior({ behaviorId: record.id });
-      if (!result.ok) setNotice(t(`error.${result.error ?? "unknown"}`));
+      if (result.ok) toast(t("deleted"));
+      else toast(t(`error.${result.error ?? "unknown"}`), "error");
     });
   }
 
@@ -310,7 +303,6 @@ function BehaviorRow({ record }: { record: JournalBehaviorRecord }) {
           )}
         </div>
       )}
-      {notice && <p className="pt-1 text-[10px] text-muted-foreground">{notice}</p>}
     </li>
   );
 }

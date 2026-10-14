@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
 import { getTeacherJournal, getTeacherTeachings } from "@/lib/queries";
 import { AppHeader } from "@/components/dashboard/app-header";
+import { ToastProvider } from "@/components/ui/toast";
 import { JournalView } from "@/components/journal/journal-view";
 
 const QUARTERS = [1, 2, 3, 4] as const;
@@ -105,7 +106,9 @@ export default async function JournalPage({
               </div>
             </div>
 
-            <JournalView data={data} />
+            <ToastProvider>
+              <JournalView data={data} />
+            </ToastProvider>
           </>
         )}
       </main>
