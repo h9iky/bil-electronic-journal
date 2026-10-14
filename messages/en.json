@@ -2,16 +2,14 @@
   "common": {
     "appName": "BIL Electronic Journal",
     "tagline": "School electronic diary",
-    "backToHome": "Back to home",
     "logout": "Log out"
   },
   "landing": {
     "badge": "University admission project • 2026",
     "title": "BIL Electronic Journal",
-    "subtitle": "Grades, SAS/SAT, activity and behaviour — in a single modern ecosystem.",
+    "subtitle": "Grades, SAS/SAT, activity and behaviour — in one system.",
     "login": "Sign in",
     "dashboard": "Dashboard",
-    "comingSoon": "Section in development",
     "bulletGrades": "SAS/SAT calculation",
     "bulletActivity": "Activity 1–10",
     "bulletBehavior": "Behaviour category",
@@ -23,7 +21,7 @@
       "behaviorTitle": "Behaviour",
       "behaviorText": "A separate category: notes and praise, never mixed with official grades.",
       "classesTitle": "Everything by class",
-      "classesText": "Students are clearly split by classes — a systematic and safe data structure."
+      "classesText": "Students are clearly split by classes."
     }
   },
   "auth": {
@@ -51,18 +49,16 @@
     "studentTitle": "Student dashboard",
     "teacherTitle": "Teacher workspace",
     "adminTitle": "Admin panel",
-    "class": "Class",
     "gradesOverview": "Performance and grades",
     "overallProgress": "Overall performance",
     "overallProgressDesc": "Average percentage across all subjects",
     "activityMetric": "Activity score",
     "activityDesc": "In-class activity (1–10)",
     "behaviorMetric": "Behaviour records",
-    "behaviorDesc": "A separate account of behaviour and school culture",
+    "behaviorDesc": "Notes and praise that never affect grades",
     "behaviorNet": "Behaviour balance",
     "behaviorRecordsCount": "{count} records",
     "potentialGrade": "Potential grade",
-    "potentialGradeDesc": "Teacher recommendation based on activity and behaviour",
     "noProposal": "No proposal",
     "noGrades": "No grades yet",
     "subject": "Subject",
@@ -95,9 +91,7 @@
     "usersDesc": "All registered accounts and their roles",
     "name": "Full name",
     "email": "Email",
-    "registeredAt": "Registered at",
-    "classesList": "Classes",
-    "subjectsList": "Subjects"
+    "registeredAt": "Registered at"
   },
   "journal": {
     "title": "Electronic journal",
@@ -119,7 +113,7 @@
     "deleteConfirm": "Delete \u201c{title}\u201d together with its grades?",
     "student": "Student",
     "noStudents": "No students in this class.",
-    "gridHint": "Score saves on blur or Enter. Navigate with Enter/↓ down, ↑ up, ← → at the edges. Paste a column from Excel — scores spread across students. Empty means not graded.",
+    "gridHint": "Score saves on Enter or blur. Enter/↓ moves down, ↑ up, ← → at the edges. A column from Excel can be pasted as a whole. Empty means not graded.",
     "activity": "Activity",
     "behavior": "Behaviour",
     "final": "Final",
