@@ -24,6 +24,7 @@ model User {
   studentActivityScores ActivityScore[]   @relation("StudentActivityScores")
   studentBehavior       BehaviorRecord[]  @relation("StudentBehaviorRecords")
   proposedForMe         ProposedGrade[]   @relation("ProposedForStudent")
+  studentAttendance     Attendance[]      @relation("StudentAttendance")
 
   // как учитель
   teachings             Teaching[]
@@ -31,6 +32,7 @@ model User {
   teacherActivityScores ActivityScore[]   @relation("TeacherActivityScores")
   teacherBehavior       BehaviorRecord[]  @relation("TeacherBehaviorRecords")
   proposedByMe          ProposedGrade[]   @relation("ProposedByTeacher")
+  teacherAttendance     Attendance[]      @relation("TeacherAttendance")
 
   // классное руководство
   curatedClasses        Klass[]
@@ -50,6 +52,7 @@ model Klass {
   assessments     Assessment[]
   behaviorRecords BehaviorRecord[]
   proposedGrades  ProposedGrade[]
+  attendance      Attendance[]
 }
 
 /// Настройки оценивания класса: веса, пороги, округление, лимиты работ.
@@ -110,6 +113,7 @@ model Subject {
   assessments    Assessment[]
   activityScores ActivityScore[]
   proposedGrades ProposedGrade[]
+  attendance     Attendance[]
 }
 
 /// Раздел/глава программы внутри четверти. К нему привязаны работы SAS (СОР).
@@ -212,4 +216,26 @@ model ProposedGrade {
   creator User    @relation("ProposedByTeacher", fields: [createdById], references: [id])
 
   @@unique([studentId, subjectId, quarter, basis])
+}
+
+/// Посещаемость: отметка ученика на уроке (класс × предмет × день).
+/// Статусы — см. constants.ts: PRESENT | ABSENT | LATE | EXCUSED.
+/// `date` нормализуют до начала суток (UTC), чтобы работал уникальный ключ.
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  classId   String
+  subjectId String
+  teacherId String
+  date      DateTime // нормализовано до 00:00 UTC
+  status    String   @default("PRESENT") // PRESENT | ABSENT | LATE | EXCUSED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User    @relation("StudentAttendance", fields: [studentId], references: [id])
+  klass   Klass   @relation(fields: [classId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  teacher User    @relation("TeacherAttendance", fields: [teacherId], references: [id])
+
+  @@unique([studentId, subjectId, date])
 }

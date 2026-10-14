@@ -15,6 +15,7 @@ import { getSessionUser, type SessionUser } from "@/lib/auth";
 import {
   isAssessmentStatus,
   isAssessmentType,
+  isAttendanceStatus,
   isBehaviorKind,
   isProposalBasis,
   isProposalStatus,
@@ -23,10 +24,12 @@ import {
   GRADE_MIN,
   type AssessmentStatus,
   type AssessmentType,
+  type AttendanceStatus,
   type BehaviorKind,
   type ProposalBasis,
   type ProposalStatus,
 } from "@/lib/constants";
+import { parseDay } from "@/lib/day";
 import { isActivityInRange, isScoreValid } from "@/lib/grading";
 
 export interface ActionResult {
@@ -481,6 +484,78 @@ export async function deleteProposal(input: {
   if (!proposal) return fail("not_found");
 
   await db.proposedGrade.delete({ where: { id: proposal.id } });
+
+  refresh();
+  return ok;
+}
+
+// ---------------------------------------------------------------------------
+// Посещаемость
+// ---------------------------------------------------------------------------
+
+/** Отметить ученика на день. Повторная отметка перезаписывает статус. */
+export async function saveAttendance(input: {
+  teachingId: string;
+  studentId: string;
+  date: string;
+  status: AttendanceStatus;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const teaching = await ownedTeaching(teacher.id, input.teachingId);
+  if (!teaching) return fail("not_found");
+  if (!isAttendanceStatus(input.status)) return fail("invalid_attendance");
+
+  const day = parseDay(input.date);
+  if (!day) return fail("invalid_date");
+
+  const enrolled = await db.enrollment.findFirst({
+    where: { studentId: input.studentId, classId: teaching.classId },
+  });
+  if (!enrolled) return fail("not_enrolled");
+
+  await db.attendance.upsert({
+    where: {
+      studentId_subjectId_date: {
+        studentId: input.studentId,
+        subjectId: teaching.subjectId,
+        date: day,
+      },
+    },
+    create: {
+      studentId: input.studentId,
+      classId: teaching.classId,
+      subjectId: teaching.subjectId,
+      teacherId: teacher.id,
+      date: day,
+      status: input.status,
+    },
+    update: {
+      classId: teaching.classId,
+      teacherId: teacher.id,
+      status: input.status,
+    },
+  });
+
+  refresh();
+  return ok;
+}
+
+/** Снять отметку — ученик снова «не отмечен». */
+export async function deleteAttendance(input: {
+  teachingId: string;
+  studentId: string;
+  date: string;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const teaching = await ownedTeaching(teacher.id, input.teachingId);
+  if (!teaching) return fail("not_found");
+
+  const day = parseDay(input.date);
+  if (!day) return fail("invalid_date");
+
+  await db.attendance.deleteMany({
+    where: { studentId: input.studentId, subjectId: teaching.subjectId, date: day },
+  });
 
   refresh();
   return ok;

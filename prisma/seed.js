@@ -40,6 +40,7 @@ const STUDENTS = [
 ];
 
 async function clearAll() {
+  await prisma.attendance.deleteMany();
   await prisma.proposedGrade.deleteMany();
   await prisma.behaviorRecord.deleteMany();
   await prisma.activityScore.deleteMany();
@@ -247,6 +248,31 @@ async function createBehavior(students, klassId, teacherId) {
   }
 }
 
+async function createAttendance(students, klassId, subjectId, teacherId) {
+  // Три учебных дня сентября 2026 — чтобы вкладка посещаемости была не пустой.
+  // Дата — начало суток UTC: так выборка совпадает с уникальным ключом.
+  const days = [
+    new Date(Date.UTC(2026, 8, 22)),
+    new Date(Date.UTC(2026, 8, 24)),
+    new Date(Date.UTC(2026, 8, 26)),
+  ];
+  const spread = ["PRESENT", "PRESENT", "PRESENT", "PRESENT", "LATE", "ABSENT", "EXCUSED"];
+  for (const date of days) {
+    for (const student of students) {
+      await prisma.attendance.create({
+        data: {
+          studentId: student.id,
+          classId: klassId,
+          subjectId,
+          teacherId,
+          date,
+          status: spread[Math.floor(random() * spread.length)],
+        },
+      });
+    }
+  }
+}
+
 async function createProposals(students, mathId, klassId, teacherId) {
   // Принятое предложение — влияет на итог; висящее — ждёт решения учителя.
   await prisma.proposedGrade.create({
@@ -301,6 +327,7 @@ async function main() {
   await createGrades(assessments, students);
   await createActivity(students, subjects.math.id, mathTeacher.id);
   await createBehavior(students, klass.id, mathTeacher.id);
+  await createAttendance(students, klass.id, subjects.math.id, mathTeacher.id);
   await createProposals(students, subjects.math.id, klass.id, mathTeacher.id);
 
   console.log(`✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик).`);

@@ -2,7 +2,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, CalendarRange } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
-import { getTeacherJournal, getTeacherTeachings } from "@/lib/queries";
+import { getTeacherJournal, getTeacherJournalAttendance, getTeacherTeachings } from "@/lib/queries";
+import { parseDay, todayIso } from "@/lib/day";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { ToastProvider } from "@/components/ui/toast";
 import { JournalView } from "@/components/journal/journal-view";
@@ -19,7 +20,7 @@ export default async function JournalPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ teaching?: string; quarter?: string }>;
+  searchParams: Promise<{ teaching?: string; quarter?: string; date?: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -27,10 +28,15 @@ export default async function JournalPage({
   const user = await requireRole(locale, "TEACHER");
   const sp = await searchParams;
   const quarter = normalizeQuarter(sp.quarter);
+  // День посещаемости: битую дату молча меняем на сегодня.
+  const date = sp.date && parseDay(sp.date) ? sp.date : todayIso();
 
   const teachings = await getTeacherTeachings(user.id);
   const active = teachings.find((t) => t.id === sp.teaching) ?? teachings[0] ?? null;
   const data = active ? await getTeacherJournal(user.id, active.id, quarter) : null;
+  const attendance = active
+    ? await getTeacherJournalAttendance(user.id, active.id, date)
+    : null;
 
   const t = await getTranslations("journal");
 
@@ -52,7 +58,7 @@ export default async function JournalPage({
           </div>
         </div>
 
-        {teachings.length === 0 || !active || !data ? (
+        {teachings.length === 0 || !active || !data || !attendance ? (
           <p className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
             {t("noTeachings")}
           </p>
@@ -68,7 +74,7 @@ export default async function JournalPage({
                       key={teaching.id}
                       href={{
                         pathname: "/dashboard/journal",
-                        query: { teaching: teaching.id, quarter },
+                        query: { teaching: teaching.id, quarter, date },
                       }}
                       className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
                         isActive
@@ -91,7 +97,7 @@ export default async function JournalPage({
                       key={value}
                       href={{
                         pathname: "/dashboard/journal",
-                        query: { teaching: active.id, quarter: value },
+                        query: { teaching: active.id, quarter: value, date },
                       }}
                       className={`h-7 w-7 rounded-md border text-center text-xs font-semibold leading-7 transition ${
                         isActive
@@ -107,7 +113,7 @@ export default async function JournalPage({
             </div>
 
             <ToastProvider>
-              <JournalView data={data} />
+              <JournalView data={data} attendance={attendance} />
             </ToastProvider>
           </>
         )}

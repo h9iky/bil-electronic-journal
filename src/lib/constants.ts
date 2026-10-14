@@ -25,6 +25,10 @@ export type AssessmentStatus = (typeof ASSESSMENT_STATUSES)[number];
 export const BEHAVIOR_KINDS = ["POSITIVE", "NEGATIVE", "NEUTRAL"] as const;
 export type BehaviorKind = (typeof BEHAVIOR_KINDS)[number];
 
+/** Отметки посещаемости: был, отсутствовал, опоздал, уважительная причина. */
+export const ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "EXCUSED"] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
 export const PROPOSAL_STATUSES = ["PENDING", "ACCEPTED", "REJECTED"] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 
@@ -94,6 +98,8 @@ export const isAssessmentStatus = (v: unknown): v is AssessmentStatus =>
   isOneOf(ASSESSMENT_STATUSES, v);
 export const isBehaviorKind = (v: unknown): v is BehaviorKind =>
   isOneOf(BEHAVIOR_KINDS, v);
+export const isAttendanceStatus = (v: unknown): v is AttendanceStatus =>
+  isOneOf(ATTENDANCE_STATUSES, v);
 export const isProposalStatus = (v: unknown): v is ProposalStatus =>
   isOneOf(PROPOSAL_STATUSES, v);
 export const isProposalBasis = (v: unknown): v is ProposalBasis =>

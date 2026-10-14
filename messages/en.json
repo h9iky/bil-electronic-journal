@@ -178,7 +178,9 @@
       "invalid_kind": "Invalid record kind.",
       "invalid_points": "Points must be between 0 and 100.",
       "invalid_grade": "Grade must be between 2 and 5.",
-      "invalid_basis": "Invalid proposal basis."
+      "invalid_basis": "Invalid proposal basis.",
+      "invalid_attendance": "Invalid attendance mark.",
+      "invalid_date": "Invalid date."
     }
   },
   "roles": {
@@ -208,5 +210,16 @@
   "proposalBasis": {
     "activity": "Activity",
     "behavior": "Behaviour"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "desc": "Mark who attended the lesson. Pick a day in the calendar.",
+    "none": "Not marked",
+    "status": {
+      "PRESENT": "Present",
+      "ABSENT": "Absent",
+      "LATE": "Late",
+      "EXCUSED": "Excused"
+    }
   }
 }

@@ -12,17 +12,20 @@ import {
   DEFAULT_RULES,
   isAssessmentStatus,
   isAssessmentType,
+  isAttendanceStatus,
   isBehaviorKind,
   isProposalBasis,
   isProposalStatus,
   isRoundingMode,
   type AssessmentStatus,
   type AssessmentType,
+  type AttendanceStatus,
   type BehaviorKind,
   type GradingRules,
   type ProposalBasis,
   type ProposalStatus,
 } from "./constants";
+import { formatDay, parseDay, todayIso } from "./day";
 import {
   averageActivity,
   behaviorBalance,
@@ -612,6 +615,62 @@ export async function getTeacherJournal(
     activities: recentActivities,
     behaviors: recentBehaviors,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Посещаемость (класс × предмет × день)
+// ---------------------------------------------------------------------------
+
+export interface JournalAttendance {
+  /** День в формате `yyyy-mm-dd`. */
+  date: string;
+  /** Статус по ученику; нет ключа — не отмечен. */
+  statuses: Record<string, AttendanceStatus>;
+  /** Сводка по дню. */
+  summary: Record<AttendanceStatus, number>;
+}
+
+const emptyAttendanceSummary = (): Record<AttendanceStatus, number> => ({
+  PRESENT: 0,
+  ABSENT: 0,
+  LATE: 0,
+  EXCUSED: 0,
+});
+
+/**
+ * Отметки посещаемости класса на конкретный день.
+ *
+ * День нормализуем через `parseDay` (начало суток UTC) — так выборка совпадает
+ * с уникальным ключом `[studentId, subjectId, date]`. Некорректная дата не
+ * роняет страницу: откатываемся на сегодня.
+ */
+export async function getTeacherJournalAttendance(
+  teacherId: string,
+  teachingId: string,
+  date: string,
+): Promise<JournalAttendance> {
+  const day = parseDay(date) ?? parseDay(todayIso())!;
+  const iso = formatDay(day);
+  const statuses: Record<string, AttendanceStatus> = {};
+  const summary = emptyAttendanceSummary();
+
+  const teaching = await db.teaching.findFirst({
+    where: { id: teachingId, teacherId },
+    select: { classId: true, subjectId: true },
+  });
+  if (!teaching) return { date: iso, statuses, summary };
+
+  const records = await db.attendance.findMany({
+    where: { classId: teaching.classId, subjectId: teaching.subjectId, date: day },
+  });
+
+  for (const record of records) {
+    if (!isAttendanceStatus(record.status)) continue;
+    statuses[record.studentId] = record.status;
+    summary[record.status] += 1;
+  }
+
+  return { date: iso, statuses, summary };
 }
 
 // ---------------------------------------------------------------------------
