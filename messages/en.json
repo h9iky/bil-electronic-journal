@@ -119,7 +119,7 @@
     "deleteConfirm": "Delete \u201c{title}\u201d together with its grades?",
     "student": "Student",
     "noStudents": "No students in this class.",
-    "gridHint": "Score saves on blur or Enter. Empty means not graded.",
+    "gridHint": "Score saves on blur or Enter. Navigate with Enter/↓ down, ↑ up, ← → at the edges. Paste a column from Excel — scores spread across students. Empty means not graded.",
     "activity": "Activity",
     "behavior": "Behaviour",
     "final": "Final",

@@ -6,6 +6,7 @@ import { formatSigned, round } from "@/lib/grading";
 import type { JournalData } from "@/lib/queries";
 import { assessmentTypeBadgeClass, gradeBadgeClass } from "@/components/dashboard/badges";
 import { GradeCell } from "./grade-cell";
+import { GradeGridProvider } from "./grade-grid";
 import { AssessmentActions } from "./assessment-actions";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { QuickActions } from "./quick-actions";
@@ -96,74 +97,78 @@ export async function JournalView({ data }: JournalViewProps) {
               {t("noStudents")}
             </p>
           ) : (
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-muted/40 text-xs font-semibold uppercase text-muted-foreground">
-                <tr>
-                  <th className="sticky left-0 z-10 bg-muted/40 px-4 py-3">
-                    {t("student")}
-                  </th>
-                  {data.assessments.map((assessment) => (
-                    <th key={assessment.id} className="px-3 py-3 text-center">
-                      <div className="font-bold text-foreground">{assessment.title}</div>
-                      <div className="mt-0.5 font-normal normal-case">
-                        {tType(assessment.type)} · max {assessment.maxScore}
-                      </div>
+            <GradeGridProvider>
+              <table className="w-full border-collapse text-left text-sm">
+                <thead className="bg-muted/40 text-xs font-semibold uppercase text-muted-foreground">
+                  <tr>
+                    <th className="sticky left-0 z-10 bg-muted/40 px-4 py-3">
+                      {t("student")}
                     </th>
-                  ))}
-                  <th className="px-3 py-3 text-center">{t("activity")}</th>
-                  <th className="px-3 py-3 text-center">{t("behavior")}</th>
-                  <th className="px-3 py-3 text-center">{t("final")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {data.students.map((student) => (
-                  <tr key={student.id} className="hover:bg-muted/20 transition">
-                    <td className="sticky left-0 z-10 bg-card px-4 py-2">
-                      <div className="font-semibold">{student.fullName}</div>
-                      <div className="text-xs text-muted-foreground">{student.email}</div>
-                    </td>
                     {data.assessments.map((assessment) => (
-                      <td key={assessment.id} className="px-3 py-2 text-center">
-                        <GradeCell
-                          assessmentId={assessment.id}
-                          studentId={student.id}
-                          maxScore={assessment.maxScore}
-                          initialScore={student.scores[assessment.id] ?? null}
-                        />
-                      </td>
+                      <th key={assessment.id} className="px-3 py-3 text-center">
+                        <div className="font-bold text-foreground">{assessment.title}</div>
+                        <div className="mt-0.5 font-normal normal-case">
+                          {tType(assessment.type)} · max {assessment.maxScore}
+                        </div>
+                      </th>
                     ))}
-                    <td className="px-3 py-2 text-center text-xs font-semibold text-primary">
-                      {student.activityAverage == null
-                        ? "—"
-                        : round(student.activityAverage, "HALF_UP", 1)}
-                    </td>
-                    <td className="px-3 py-2 text-center text-xs font-semibold">
-                      <span
-                        className={
-                          student.behavior.net < 0
-                            ? "text-destructive"
-                            : "text-emerald-600 dark:text-emerald-400"
-                        }
-                      >
-                        {formatSigned(student.behavior.net)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      {student.quarterGrade == null ? (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className={`text-xs font-bold ${gradeBadgeClass(student.quarterGrade).badge}`}
-                        >
-                          {student.quarterGrade}
-                        </Badge>
-                      )}
-                    </td>
+                    <th className="px-3 py-3 text-center">{t("activity")}</th>
+                    <th className="px-3 py-3 text-center">{t("behavior")}</th>
+                    <th className="px-3 py-3 text-center">{t("final")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {data.students.map((student, rowIndex) => (
+                    <tr key={student.id} className="hover:bg-muted/20 transition">
+                      <td className="sticky left-0 z-10 bg-card px-4 py-2">
+                        <div className="font-semibold">{student.fullName}</div>
+                        <div className="text-xs text-muted-foreground">{student.email}</div>
+                      </td>
+                      {data.assessments.map((assessment, colIndex) => (
+                        <td key={assessment.id} className="px-3 py-2 text-center">
+                          <GradeCell
+                            assessmentId={assessment.id}
+                            studentId={student.id}
+                            maxScore={assessment.maxScore}
+                            initialScore={student.scores[assessment.id] ?? null}
+                            rowIndex={rowIndex}
+                            colIndex={colIndex}
+                          />
+                        </td>
+                      ))}
+                      <td className="px-3 py-2 text-center text-xs font-semibold text-primary">
+                        {student.activityAverage == null
+                          ? "—"
+                          : round(student.activityAverage, "HALF_UP", 1)}
+                      </td>
+                      <td className="px-3 py-2 text-center text-xs font-semibold">
+                        <span
+                          className={
+                            student.behavior.net < 0
+                              ? "text-destructive"
+                              : "text-emerald-600 dark:text-emerald-400"
+                          }
+                        >
+                          {formatSigned(student.behavior.net)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        {student.quarterGrade == null ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className={`text-xs font-bold ${gradeBadgeClass(student.quarterGrade).badge}`}
+                          >
+                            {student.quarterGrade}
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </GradeGridProvider>
           )}
         </CardContent>
       </Card>
