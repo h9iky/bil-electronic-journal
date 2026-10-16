@@ -34,10 +34,33 @@ import {
   quarterPercent,
   round,
   type BehaviorBalance,
+  type GroupKey,
   type GroupScore,
+  type SubjectGroups,
 } from "./grading";
 
 const EMPTY_GROUP = (): GroupScore => ({ sumScore: 0, sumMax: 0, count: 0 });
+
+/** Пустые группы работ предмета. */
+const EMPTY_SUBJECT_GROUPS = (): SubjectGroups => ({
+  sas: EMPTY_GROUP(),
+  sat: EMPTY_GROUP(),
+  formative: EMPTY_GROUP(),
+});
+
+/** Тип работы → ключ группы в четвертной. */
+const GROUP_KEY_BY_TYPE: Record<AssessmentType, GroupKey> = {
+  FORMATIVE: "formative",
+  SAS: "sas",
+  SAT: "sat",
+};
+
+/** Приоритет предстоящей работы при равных датах: сначала СОЧ, потом СОР. */
+const UPCOMING_PRIORITY: Record<AssessmentType, number> = {
+  SAT: 0,
+  SAS: 1,
+  FORMATIVE: 2,
+};
 
 /** Сколько последних записей активности/поведения показывать в панели правки. */
 const RECORDS_LIMIT = 40;
@@ -108,17 +131,30 @@ export interface StudentProposal {
   status: ProposalStatus;
 }
 
+/** Предстоящая (опубликованная, но не оценённая) работа — для симулятора. */
+export interface StudentUpcomingWork {
+  title: string;
+  key: GroupKey;
+  maxScore: number;
+}
+
 export interface StudentSubjectBlock {
   subjectId: string;
   subjectName: string;
   grades: StudentGradeRow[];
   quarterPercent: number | null;
   quarterGrade: number | null;
+  /** Группы работ — вход для симулятора цели «что нужно для 5». */
+  groups: SubjectGroups;
+  upcoming: StudentUpcomingWork | null;
+  /** Желаемая оценка ученика по предмету за четверть (2–5). */
+  goal: number | null;
 }
 
 export interface StudentDashboard {
   className: string | null;
   year: string | null;
+  quarter: number;
   subjects: StudentSubjectBlock[];
   overallPercent: number | null;
   activities: StudentActivityRow[];
@@ -126,6 +162,8 @@ export interface StudentDashboard {
   behaviors: StudentBehaviorRow[];
   behavior: BehaviorBalance;
   proposal: StudentProposal | null;
+  /** Правила оценивания класса — нужны симулятору на клиенте. */
+  rules: GradingRules;
 }
 
 export async function getStudentDashboard(
@@ -138,7 +176,7 @@ export async function getStudentDashboard(
   });
   const rules = await loadGradingRules(enrollment?.classId ?? null);
 
-  const [grades, activities, behaviors, proposals] = await Promise.all([
+  const [grades, activities, behaviors, proposals, goals] = await Promise.all([
     db.grade.findMany({
       where: { studentId, assessment: { status: "PUBLISHED", quarter } },
       include: { assessment: { include: { subject: true } } },
@@ -158,6 +196,7 @@ export async function getStudentDashboard(
       include: { subject: true },
       orderBy: { value: "desc" },
     }),
+    db.gradeGoal.findMany({ where: { studentId, quarter } }),
   ]);
 
   const subjectBlocks = new Map<string, StudentSubjectBlock>();
@@ -172,6 +211,9 @@ export async function getStudentDashboard(
       grades: [],
       quarterPercent: null,
       quarterGrade: null,
+      groups: EMPTY_SUBJECT_GROUPS(),
+      upcoming: null,
+      goal: null,
     };
     block.grades.push({
       id: grade.id,
@@ -198,6 +240,9 @@ export async function getStudentDashboard(
     }
   }
 
+  const goalBySubject = new Map<string, number>();
+  for (const goal of goals) goalBySubject.set(goal.subjectId, goal.targetGrade);
+
   for (const block of subjectBlocks.values()) {
     const groups: Record<AssessmentType, GroupScore> = {
       FORMATIVE: EMPTY_GROUP(),
@@ -207,6 +252,7 @@ export async function getStudentDashboard(
     for (const row of block.grades) {
       addToGroup(groups[row.type], row.score, row.maxScore);
     }
+    block.groups = { sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE };
     block.quarterPercent = quarterPercent(
       { sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE },
       rules,
@@ -215,6 +261,21 @@ export async function getStudentDashboard(
       quarterGrade({ sas: groups.SAS, sat: groups.SAT, formative: groups.FORMATIVE }, rules),
       acceptedBySubject.get(block.subjectId),
     );
+    block.goal = goalBySubject.get(block.subjectId) ?? null;
+
+    // Предстоящая работа — опубликованная, но ещё не оценённая у ученика.
+    // Берём ближайшую по дате; при равенстве приоритет у СОЧ, затем СОР.
+    const ungraded = block.grades
+      .filter((row) => row.score == null)
+      .sort(
+        (a, b) =>
+          a.date.getTime() - b.date.getTime() ||
+          UPCOMING_PRIORITY[a.type] - UPCOMING_PRIORITY[b.type],
+      );
+    const next = ungraded[0];
+    block.upcoming = next
+      ? { title: next.title, key: GROUP_KEY_BY_TYPE[next.type], maxScore: next.maxScore }
+      : null;
   }
 
   const blocks = [...subjectBlocks.values()];
@@ -232,6 +293,7 @@ export async function getStudentDashboard(
   return {
     className: enrollment?.klass.name ?? null,
     year: enrollment?.klass.year ?? null,
+    quarter,
     subjects: blocks,
     overallPercent,
     activities: activities.map((a) => ({
@@ -258,6 +320,7 @@ export async function getStudentDashboard(
           status: "ACCEPTED",
         }
       : null,
+    rules,
   };
 }
 

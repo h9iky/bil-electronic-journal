@@ -4,12 +4,14 @@ import {
   CheckCircle2,
   HeartHandshake,
   Sparkles,
+  Target,
   TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatSigned, round } from "@/lib/grading";
 import type { StudentDashboard } from "@/lib/queries";
+import { GoalCard } from "./goal-card";
 import { assessmentTypeBadgeClass, gradeBadgeClass } from "./badges";
 
 interface StudentViewProps {
@@ -128,6 +130,31 @@ export async function StudentView({ data }: StudentViewProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Цель и прогноз — «изюминка»: что нужно, чтобы вышла желаемая оценка */}
+      {data.subjects.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" />
+            <h2 className="text-base font-bold">{t("goalTitle")}</h2>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-1">{t("goalDesc")}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {data.subjects.map((subject) => (
+              <GoalCard
+                key={subject.subjectId}
+                subjectId={subject.subjectId}
+                subjectName={subject.subjectName}
+                quarter={data.quarter}
+                groups={subject.groups}
+                upcoming={subject.upcoming}
+                goal={subject.goal}
+                rules={data.rules}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Официальный журнал */}
       <Card className="border-border/60">

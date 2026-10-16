@@ -25,6 +25,7 @@ model User {
   studentBehavior       BehaviorRecord[]  @relation("StudentBehaviorRecords")
   proposedForMe         ProposedGrade[]   @relation("ProposedForStudent")
   studentAttendance     Attendance[]      @relation("StudentAttendance")
+  goals                 GradeGoal[]       @relation("StudentGoals")
 
   // как учитель
   teachings             Teaching[]
@@ -114,6 +115,7 @@ model Subject {
   activityScores ActivityScore[]
   proposedGrades ProposedGrade[]
   attendance     Attendance[]
+  goals          GradeGoal[]
 }
 
 /// Раздел/глава программы внутри четверти. К нему привязаны работы SAS (СОР).
@@ -238,4 +240,21 @@ model Attendance {
   teacher User    @relation("TeacherAttendance", fields: [teacherId], references: [id])
 
   @@unique([studentId, subjectId, date])
+}
+
+/// Цель ученика: желаемая оценка по предмету за четверть (2..5).
+/// Нужна «симулятору оценки»: показываем, что требуется на предстоящую работу.
+model GradeGoal {
+  id          String   @id @default(cuid())
+  studentId   String
+  subjectId   String
+  quarter     Int // 1..4
+  targetGrade Int // 2..5
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student User    @relation("StudentGoals", fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId, quarter])
 }

@@ -16,10 +16,13 @@ import {
   percent,
   quarterGrade,
   quarterPercent,
+  requiredScoreForTarget,
   round,
   semesterPercent,
+  simulateQuarter,
   yearPercent,
   type GroupScore,
+  type SubjectGroups,
 } from "./grading";
 
 /** Быстрый конструктор сводки по группе работ. */
@@ -171,6 +174,42 @@ describe("effectiveQuarterGrade — принятое предложение по
   it("некорректное значение (вне 2–5) игнорируется — остаётся формула", () => {
     expect(effectiveQuarterGrade(4, { value: 7, status: "ACCEPTED" })).toBe(4);
     expect(effectiveQuarterGrade(4, { value: 1, status: "ACCEPTED" })).toBe(4);
+  });
+});
+
+describe("requiredScoreForTarget / simulateQuarter — симулятор цели", () => {
+  const empty = (): SubjectGroups => ({
+    sas: { sumScore: 0, sumMax: 0, count: 0 },
+    sat: { sumScore: 0, sumMax: 0, count: 0 },
+    formative: { sumScore: 0, sumMax: 0, count: 0 },
+  });
+
+  it("считает минимальный балл СОЧ под цель (SAS 17/20 = 85%, веса 50/50)", () => {
+    const groups = { ...empty(), sas: group(17, 20, 1) };
+    expect(requiredScoreForTarget(groups, { key: "sat", maxScore: 30 }, 5, rules())).toBe(26);
+    expect(requiredScoreForTarget(groups, { key: "sat", maxScore: 30 }, 4, rules())).toBe(14);
+    expect(requiredScoreForTarget(groups, { key: "sat", maxScore: 30 }, 3, rules())).toBe(0);
+  });
+
+  it("возвращает null, когда цель недостижима даже при максимуме", () => {
+    const groups = { ...empty(), sas: group(0, 20, 1) }; // SAS = 0%
+    expect(requiredScoreForTarget(groups, { key: "sat", maxScore: 30 }, 5, rules())).toBeNull();
+  });
+
+  it("simulateQuarter повторяет официальную формулу (SAS 13/20 + СОЧ 30/30)", () => {
+    const groups = { ...empty(), sas: group(13, 20, 1) };
+    expect(simulateQuarter(groups, { key: "sat", maxScore: 30 }, 30, rules())).toEqual({
+      percent: 82.5,
+      grade: 4,
+    });
+  });
+
+  it("ученик без оценок: всё решает предстоящая работа", () => {
+    expect(simulateQuarter(empty(), { key: "sat", maxScore: 30 }, 30, rules())).toEqual({
+      percent: 100,
+      grade: 5,
+    });
+    expect(requiredScoreForTarget(empty(), { key: "sat", maxScore: 30 }, 5, rules())).toBe(26);
   });
 });
 

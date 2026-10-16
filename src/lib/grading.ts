@@ -135,6 +135,79 @@ export function quarterGrade(
   return gradeFromPercent(round(value, rules.rounding), rules.thresholds);
 }
 
+/** Ключ группы работ в четвертной. */
+export type GroupKey = "sas" | "sat" | "formative";
+
+/** Текущие группы работ предмета, из которых собирается четвертная. */
+export interface SubjectGroups {
+  sas: GroupScore;
+  sat: GroupScore;
+  formative: GroupScore;
+}
+
+/** Копия групп с добавленным гипотетическим баллом за одну работу. */
+function withExtraWork(
+  groups: SubjectGroups,
+  key: GroupKey,
+  score: number,
+  maxScore: number,
+): SubjectGroups {
+  const group = groups[key];
+  return {
+    ...groups,
+    [key]: {
+      sumScore: group.sumScore + score,
+      sumMax: group.sumMax + maxScore,
+      count: group.count + 1,
+    },
+  };
+}
+
+/**
+ * Минимальный балл за предстоящую работу, при котором итог достигнет цели.
+ *
+ * Перебираем баллы `0..max` и гоняем **настоящий** `quarterGrade` — так прогноз
+ * совпадает с официальной формулой до последнего округления, без дублирования
+ * математики. `null` — цель недостижима даже при максимуме.
+ */
+export function requiredScoreForTarget(
+  groups: SubjectGroups,
+  upcoming: { key: GroupKey; maxScore: number },
+  targetGrade: number,
+  rules: GradingRules,
+): number | null {
+  if (upcoming.maxScore <= 0) return null;
+  for (let score = 0; score <= upcoming.maxScore; score += 1) {
+    const next = withExtraWork(groups, upcoming.key, score, upcoming.maxScore);
+    const grade = quarterGrade(
+      { sas: next.sas, sat: next.sat, formative: next.formative },
+      rules,
+    );
+    if (grade != null && grade >= targetGrade) return score;
+  }
+  return null;
+}
+
+/** Итог (процент и оценка) с учётом гипотетического балла за работу. */
+export function simulateQuarter(
+  groups: SubjectGroups,
+  upcoming: { key: GroupKey; maxScore: number },
+  score: number,
+  rules: GradingRules,
+): { percent: number | null; grade: number | null } {
+  const next = withExtraWork(groups, upcoming.key, score, upcoming.maxScore);
+  return {
+    percent: quarterPercent(
+      { sas: next.sas, sat: next.sat, formative: next.formative },
+      rules,
+    ),
+    grade: quarterGrade(
+      { sas: next.sas, sat: next.sat, formative: next.formative },
+      rules,
+    ),
+  };
+}
+
 /**
  * Итог четверти с учётом «потенциальной оценки».
  *

@@ -40,6 +40,7 @@ const STUDENTS = [
 ];
 
 async function clearAll() {
+  await prisma.gradeGoal.deleteMany();
   await prisma.attendance.deleteMany();
   await prisma.proposedGrade.deleteMany();
   await prisma.behaviorRecord.deleteMany();
@@ -146,6 +147,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "Формативті: функциялар мен қасиеттер",
       subjectId: subjects.math.id,
       maxScore: 10,
+      date: new Date(2026, 8, 10),
     },
   });
   const sas1 = await prisma.assessment.create({
@@ -157,6 +159,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "1-SAS: Тригонометриялық теңдеулер",
       subjectId: subjects.math.id,
       maxScore: 20,
+      date: new Date(2026, 8, 18),
     },
   });
   const sas2 = await prisma.assessment.create({
@@ -168,6 +171,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "2-SAS: Туынды есептері",
       subjectId: subjects.math.id,
       maxScore: 20,
+      date: new Date(2026, 9, 5),
     },
   });
   const sat = await prisma.assessment.create({
@@ -178,6 +182,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "1-SAT: тоқсандық жиынтық",
       subjectId: subjects.math.id,
       maxScore: 30,
+      date: new Date(2026, 9, 20),
     },
   });
 
@@ -185,15 +190,20 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
 }
 
 async function createGrades(assessments, students) {
-  // Оценки ставим только по опубликованным работам — черновик пустой.
-  const published = [assessments.formative, assessments.sas1, assessments.sat];
-  for (const assessment of published) {
+  // Оценки — по проведённым работам. СОЧ опубликован (ученик его видит), но ещё
+  // не оценён: `score = null` — это «предстоящая работа» для симулятора цели.
+  const works = [
+    { assessment: assessments.formative, scored: true },
+    { assessment: assessments.sas1, scored: true },
+    { assessment: assessments.sat, scored: false },
+  ];
+  for (const { assessment, scored } of works) {
     for (const student of students) {
       await prisma.grade.create({
         data: {
           assessmentId: assessment.id,
           studentId: student.id,
-          score: scoreFor(assessment.maxScore),
+          score: scored ? scoreFor(assessment.maxScore) : null,
         },
       });
     }
@@ -301,6 +311,13 @@ async function createProposals(students, mathId, klassId, teacherId) {
   });
 }
 
+async function createGoals(students, mathId) {
+  // Демо-ученик уже поставил цель — дашборд сразу показывает симулятор в деле.
+  await prisma.gradeGoal.create({
+    data: { studentId: students[0].id, subjectId: mathId, quarter: 1, targetGrade: 5 },
+  });
+}
+
 async function main() {
   console.log("🌱 Деректер базасын толтыру (seeding)...");
   await clearAll();
@@ -329,6 +346,7 @@ async function main() {
   await createBehavior(students, klass.id, mathTeacher.id);
   await createAttendance(students, klass.id, subjects.math.id, mathTeacher.id);
   await createProposals(students, subjects.math.id, klass.id, mathTeacher.id);
+  await createGoals(students, subjects.math.id);
 
   console.log(`✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик).`);
 }
