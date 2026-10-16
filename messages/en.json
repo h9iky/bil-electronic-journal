@@ -110,7 +110,14 @@
     "goalHint": "Drag the slider — the forecast updates live.",
     "goalErrorForbidden": "This subject isn't taught in your class",
     "goalErrorInvalid": "Invalid value",
-    "goalErrorUnknown": "Couldn't save"
+    "goalErrorUnknown": "Couldn't save",
+    "homeworkTitle": "Assigned",
+    "homeworkDesc": "Homework for your class",
+    "homeworkEmpty": "Nothing assigned yet",
+    "homeworkToday": "Today",
+    "homeworkTomorrow": "Tomorrow",
+    "homeworkYesterday": "Yesterday",
+    "homeworkDue": "due {date}"
   },
   "journal": {
     "title": "Electronic journal",
@@ -193,7 +200,10 @@
       "invalid_grade": "Grade must be between 2 and 5.",
       "invalid_basis": "Invalid proposal basis.",
       "invalid_attendance": "Invalid attendance mark.",
-      "invalid_date": "Invalid date."
+      "invalid_date": "Invalid date.",
+      "invalid_homework_title": "The task is required (up to 200 characters).",
+      "invalid_homework_desc": "Description is too long (up to 2000 characters).",
+      "invalid_due_date": "The due date can't be earlier than the lesson day."
     }
   },
   "roles": {
@@ -234,5 +244,20 @@
       "LATE": "Late",
       "EXCUSED": "Excused"
     }
+  },
+  "homework": {
+    "title": "Homework",
+    "desc": "What the class was assigned for this lesson. The day matches attendance.",
+    "add": "Assign",
+    "titleLabel": "Task",
+    "titlePlaceholder": "e.g. read section 15, problems 21-24",
+    "descLabel": "Details",
+    "descPlaceholder": "What exactly to do: numbers, pages, links…",
+    "dueLabel": "Due by",
+    "due": "Due {date}",
+    "empty": "No assignments for this day.",
+    "delete": "Delete",
+    "saved": "Assignment added",
+    "deleted": "Assignment removed"
   }
 }

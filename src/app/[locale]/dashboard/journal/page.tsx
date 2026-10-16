@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowLeft, CalendarRange } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
-import { getTeacherJournal, getTeacherJournalAttendance, getTeacherTeachings } from "@/lib/queries";
+import { getTeacherJournal, getTeacherJournalAttendance, getTeacherJournalHomework, getTeacherTeachings } from "@/lib/queries";
 import { parseDay, todayIso } from "@/lib/day";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { JournalView } from "@/components/journal/journal-view";
@@ -36,6 +36,9 @@ export default async function JournalPage({
   const attendance = active
     ? await getTeacherJournalAttendance(user.id, active.id, date)
     : null;
+  const homework = active
+    ? await getTeacherJournalHomework(user.id, active.id, date)
+    : null;
 
   const t = await getTranslations("journal");
 
@@ -57,7 +60,7 @@ export default async function JournalPage({
           </div>
         </div>
 
-        {teachings.length === 0 || !active || !data || !attendance ? (
+        {teachings.length === 0 || !active || !data || !attendance || !homework ? (
           <p className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
             {t("noTeachings")}
           </p>
@@ -111,7 +114,7 @@ export default async function JournalPage({
               </div>
             </div>
 
-            <JournalView data={data} attendance={attendance} />
+            <JournalView data={data} attendance={attendance} homework={homework} />
           </>
         )}
       </main>

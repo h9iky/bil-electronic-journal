@@ -40,6 +40,7 @@ const STUDENTS = [
 ];
 
 async function clearAll() {
+  await prisma.homework.deleteMany();
   await prisma.gradeGoal.deleteMany();
   await prisma.attendance.deleteMany();
   await prisma.proposedGrade.deleteMany();
@@ -318,6 +319,67 @@ async function createGoals(students, mathId) {
   });
 }
 
+async function createHomework({ klassId, subjects, mathTeacherId, csTeacherId }) {
+  // Задания вокруг «сегодня» (2026-10-16, пт): есть прошедшие, сегодняшние и на
+  // следующий учебный день — вкладка «Что задано» у ученика сразу живая.
+  const day = (y, m, d) => new Date(Date.UTC(y, m, d));
+  const items = [
+    {
+      subjectId: subjects.math.id,
+      teacherId: mathTeacherId,
+      date: day(2026, 9, 15),
+      dueDate: day(2026, 9, 19),
+      title: "Тригонометриялық теңдеулерді шешу",
+      description: "Оқулық, №12–18 (147-бет). Қиындарын жеке дәптерге шығару.",
+    },
+    {
+      subjectId: subjects.math.id,
+      teacherId: mathTeacherId,
+      date: day(2026, 9, 16),
+      dueDate: day(2026, 9, 19),
+      title: "Туындыны есептеуге дайындық",
+      description: "§15 оқу, №21–24. Дүйсенбіде өзін-өзі тексеру жұмысы.",
+    },
+    {
+      subjectId: subjects.physics.id,
+      teacherId: mathTeacherId,
+      date: day(2026, 9, 16),
+      dueDate: null,
+      title: "Ньютон заңдары бойынша есептер",
+      description: "№33, 35, 36 есептерді шығару. Формулаларды қайталау.",
+    },
+    {
+      subjectId: subjects.cs.id,
+      teacherId: csTeacherId,
+      date: day(2026, 9, 16),
+      dueDate: day(2026, 9, 19),
+      title: "Циклдер: практикалық жұмыс",
+      description: "Python: 1–10 есептерді шешіп, файлды жүктеу.",
+    },
+    {
+      subjectId: subjects.cs.id,
+      teacherId: csTeacherId,
+      date: day(2026, 9, 19),
+      dueDate: null,
+      title: "Массивтер тақырыбын қайталау",
+      description: "§7 оқу, мысалдарды көшіріп талдау.",
+    },
+  ];
+  for (const item of items) {
+    await prisma.homework.create({
+      data: {
+        classId: klassId,
+        subjectId: item.subjectId,
+        teacherId: item.teacherId,
+        date: item.date,
+        dueDate: item.dueDate,
+        title: item.title,
+        description: item.description,
+      },
+    });
+  }
+}
+
 async function main() {
   console.log("🌱 Деректер базасын толтыру (seeding)...");
   await clearAll();
@@ -347,8 +409,14 @@ async function main() {
   await createAttendance(students, klass.id, subjects.math.id, mathTeacher.id);
   await createProposals(students, subjects.math.id, klass.id, mathTeacher.id);
   await createGoals(students, subjects.math.id);
+  await createHomework({
+    klassId: klass.id,
+    subjects,
+    mathTeacherId: mathTeacher.id,
+    csTeacherId: csTeacher.id,
+  });
 
-  console.log(`✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик).`);
+  console.log(`✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик), 5 үй тапсырмасы.`);
 }
 
 main()

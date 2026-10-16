@@ -37,6 +37,9 @@ model User {
 
   // классное руководство
   curatedClasses        Klass[]
+
+  // как автор домашних заданий
+  homeworkGiven         Homework[]      @relation("HomeworkByTeacher")
 }
 
 /// Класс: "10А". Настройки оценивания — в отдельной таблице ClassSettings.
@@ -54,6 +57,7 @@ model Klass {
   behaviorRecords BehaviorRecord[]
   proposedGrades  ProposedGrade[]
   attendance      Attendance[]
+  homework        Homework[]
 }
 
 /// Настройки оценивания класса: веса, пороги, округление, лимиты работ.
@@ -116,6 +120,7 @@ model Subject {
   proposedGrades ProposedGrade[]
   attendance     Attendance[]
   goals          GradeGoal[]
+  homework       Homework[]
 }
 
 /// Раздел/глава программы внутри четверти. К нему привязаны работы SAS (СОР).
@@ -257,4 +262,26 @@ model GradeGoal {
   subject Subject @relation(fields: [subjectId], references: [id])
 
   @@unique([studentId, subjectId, quarter])
+}
+
+/// Домашнее задание: что задано классу по предмету на урок конкретного дня.
+/// `date` — день урока (нормализован до 00:00 UTC, как в `Attendance`);
+/// `dueDate` — необязательный срок сдачи. Записей на день может быть несколько.
+model Homework {
+  id          String    @id @default(cuid())
+  classId     String
+  subjectId   String
+  teacherId   String
+  date        DateTime // день урока, 00:00 UTC
+  dueDate     DateTime? // срок сдачи, 00:00 UTC
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  klass   Klass   @relation(fields: [classId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  teacher User    @relation("HomeworkByTeacher", fields: [teacherId], references: [id])
+
+  @@index([classId, subjectId, date])
 }

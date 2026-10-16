@@ -65,6 +65,9 @@ const UPCOMING_PRIORITY: Record<AssessmentType, number> = {
 /** Сколько последних записей активности/поведения показывать в панели правки. */
 const RECORDS_LIMIT = 40;
 
+/** Сколько домашних заданий показывать ученику в разделе «Что задано». */
+const HOMEWORK_LIMIT = 25;
+
 /** Несданные работы (score = null) не искажают процент — их просто нет в группе. */
 function addToGroup(group: GroupScore, score: number | null, maxScore: number): void {
   if (score == null || maxScore <= 0) return;
@@ -138,6 +141,19 @@ export interface StudentUpcomingWork {
   maxScore: number;
 }
 
+/** Домашнее задание, видимое ученику (по его классу). */
+export interface StudentHomeworkRow {
+  id: string;
+  subjectName: string;
+  title: string;
+  description: string | null;
+  /** День урока, на который задано. */
+  date: Date;
+  /** Срок сдачи, если учитель его указал. */
+  dueDate: Date | null;
+  teacherName: string;
+}
+
 export interface StudentSubjectBlock {
   subjectId: string;
   subjectName: string;
@@ -164,6 +180,8 @@ export interface StudentDashboard {
   proposal: StudentProposal | null;
   /** Правила оценивания класса — нужны симулятору на клиенте. */
   rules: GradingRules;
+  /** Домашние задания класса — раздел «Что задано». */
+  homework: StudentHomeworkRow[];
 }
 
 export async function getStudentDashboard(
@@ -176,7 +194,7 @@ export async function getStudentDashboard(
   });
   const rules = await loadGradingRules(enrollment?.classId ?? null);
 
-  const [grades, activities, behaviors, proposals, goals] = await Promise.all([
+  const [grades, activities, behaviors, proposals, goals, homework] = await Promise.all([
     db.grade.findMany({
       where: { studentId, assessment: { status: "PUBLISHED", quarter } },
       include: { assessment: { include: { subject: true } } },
@@ -197,6 +215,14 @@ export async function getStudentDashboard(
       orderBy: { value: "desc" },
     }),
     db.gradeGoal.findMany({ where: { studentId, quarter } }),
+    enrollment
+      ? db.homework.findMany({
+          where: { classId: enrollment.classId },
+          include: { subject: true, teacher: true },
+          orderBy: { date: "desc" },
+          take: HOMEWORK_LIMIT,
+        })
+      : Promise.resolve([]),
   ]);
 
   const subjectBlocks = new Map<string, StudentSubjectBlock>();
@@ -321,6 +347,15 @@ export async function getStudentDashboard(
         }
       : null,
     rules,
+    homework: homework.map((hw) => ({
+      id: hw.id,
+      subjectName: hw.subject.name,
+      title: hw.title,
+      description: hw.description,
+      date: hw.date,
+      dueDate: hw.dueDate,
+      teacherName: hw.teacher.fullName,
+    })),
   };
 }
 
@@ -745,6 +780,65 @@ export async function getTeacherJournalAttendance(
   }
 
   return { date: iso, statuses, summary };
+}
+
+// ---------------------------------------------------------------------------
+// Домашние задания (класс × предмет × день)
+// ---------------------------------------------------------------------------
+
+export interface JournalHomeworkItem {
+  id: string;
+  title: string;
+  description: string | null;
+  /** День урока, на который задано. */
+  date: Date;
+  /** Срок сдачи, если указан. */
+  dueDate: Date | null;
+  /** Автор задания — текущий учитель (тогда его можно удалить). */
+  editable: boolean;
+}
+
+export interface JournalHomework {
+  /** День в формате `yyyy-mm-dd` (тот же `?date=`, что у посещаемости). */
+  date: string;
+  items: JournalHomeworkItem[];
+}
+
+/**
+ * Домашние задания класса/предмета на конкретный день — то же `?date=`, что и
+ * у посещаемости: один «учебный день» на оба раздела. Некорректная дата →
+ * сегодня (не роняем страницу).
+ */
+export async function getTeacherJournalHomework(
+  teacherId: string,
+  teachingId: string,
+  date: string,
+): Promise<JournalHomework> {
+  const day = parseDay(date) ?? parseDay(todayIso())!;
+  const iso = formatDay(day);
+
+  const teaching = await db.teaching.findFirst({
+    where: { id: teachingId, teacherId },
+    select: { classId: true, subjectId: true },
+  });
+  if (!teaching) return { date: iso, items: [] };
+
+  const records = await db.homework.findMany({
+    where: { classId: teaching.classId, subjectId: teaching.subjectId, date: day },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return {
+    date: iso,
+    items: records.map((record) => ({
+      id: record.id,
+      title: record.title,
+      description: record.description,
+      date: record.date,
+      dueDate: record.dueDate,
+      editable: record.teacherId === teacherId,
+    })),
+  };
 }
 
 // ---------------------------------------------------------------------------

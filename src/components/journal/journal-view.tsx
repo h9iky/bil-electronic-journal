@@ -3,12 +3,13 @@ import { ClipboardList } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatSigned, round } from "@/lib/grading";
-import type { JournalAttendance, JournalData } from "@/lib/queries";
+import type { JournalAttendance, JournalData, JournalHomework } from "@/lib/queries";
 import { assessmentTypeBadgeClass, gradeBadgeClass } from "@/components/dashboard/badges";
 import { GradeCell } from "./grade-cell";
 import { GradeGridProvider } from "./grade-grid";
 import { ProposalCell } from "./proposal-cell";
 import { AttendanceBoard } from "./attendance-board";
+import { HomeworkBoard } from "./homework-board";
 import { AssessmentActions } from "./assessment-actions";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { QuickActions } from "./quick-actions";
@@ -17,10 +18,11 @@ import { JournalRecords } from "./journal-records";
 interface JournalViewProps {
   data: JournalData;
   attendance: JournalAttendance;
+  homework: JournalHomework;
 }
 
 /** Журнал одного класса/предмета за четверть: работы, матрица баллов, посещаемость, записи. */
-export async function JournalView({ data, attendance }: JournalViewProps) {
+export async function JournalView({ data, attendance, homework }: JournalViewProps) {
   const t = await getTranslations("journal");
   const tType = await getTranslations("assessmentType");
   const tStatus = await getTranslations("assessmentStatus");
@@ -188,13 +190,21 @@ export async function JournalView({ data, attendance }: JournalViewProps) {
       </Card>
 
       <AttendanceBoard
-        key={attendance.date}
+        key={`attendance-${attendance.date}`}
         teachingId={data.teaching.id}
         quarter={data.quarter}
         date={attendance.date}
         students={data.students.map((s) => ({ id: s.id, fullName: s.fullName }))}
         statuses={attendance.statuses}
         summary={attendance.summary}
+      />
+
+      <HomeworkBoard
+        key={`homework-${homework.date}`}
+        teachingId={data.teaching.id}
+        quarter={data.quarter}
+        date={homework.date}
+        items={homework.items}
       />
 
       <JournalRecords activities={data.activities} behaviors={data.behaviors} />

@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import {
   Award,
+  BookOpenCheck,
   CheckCircle2,
   HeartHandshake,
   Sparkles,
@@ -10,6 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatSigned, round } from "@/lib/grading";
+import { todayIso } from "@/lib/day";
 import type { StudentDashboard } from "@/lib/queries";
 import { GoalCard } from "./goal-card";
 import { assessmentTypeBadgeClass, gradeBadgeClass } from "./badges";
@@ -27,6 +29,16 @@ export async function StudentView({ data }: StudentViewProps) {
 
   const subjectsWithGrades = data.subjects.filter((subject) => subject.grades.length > 0);
   const { proposal, behavior } = data;
+
+  // «Сегодня/Завтра/Вчера» для дня урока домашки — считаем в UTC, как храним.
+  const todayMs = new Date(`${todayIso()}T00:00:00.000Z`).getTime();
+  const dayLabel = (date: Date): string | null => {
+    const diff = Math.round((new Date(date).getTime() - todayMs) / 86_400_000);
+    if (diff === 0) return t("homeworkToday");
+    if (diff === 1) return t("homeworkTomorrow");
+    if (diff === -1) return t("homeworkYesterday");
+    return null;
+  };
 
   return (
     <div className="space-y-8">
@@ -130,6 +142,68 @@ export async function StudentView({ data }: StudentViewProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Что задано — домашние задания (то, ради чего открывают дневник каждый день) */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <BookOpenCheck className="h-4 w-4 text-primary" />
+          <h2 className="text-base font-bold">{t("homeworkTitle")}</h2>
+        </div>
+        <p className="text-xs text-muted-foreground -mt-1">{t("homeworkDesc")}</p>
+        <Card className="border-border/60">
+          <CardContent className="p-0">
+            {data.homework.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("homeworkEmpty")}
+              </p>
+            ) : (
+              <ul className="divide-y divide-border/60">
+                {data.homework.map((hw) => {
+                  const label = dayLabel(hw.date);
+                  return (
+                    <li
+                      key={hw.id}
+                      className="flex flex-col gap-2 p-4 transition hover:bg-muted/20 sm:flex-row sm:items-start sm:justify-between"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] font-semibold">
+                            {hw.subjectName}
+                          </Badge>
+                          {label && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {label}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm font-semibold text-foreground">{hw.title}</div>
+                        {hw.description && (
+                          <p className="text-xs text-muted-foreground whitespace-pre-line">
+                            {hw.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 flex-row items-center gap-2 text-left sm:flex-col sm:items-end sm:gap-1 sm:text-right">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(hw.date).toLocaleDateString()}
+                        </span>
+                        {hw.dueDate && (
+                          <span className="rounded-full border border-amber-500/40 bg-amber-500/5 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                            {t("homeworkDue", {
+                              date: new Date(hw.dueDate).toLocaleDateString(),
+                            })}
+                          </span>
+                        )}
+                        <span className="text-[11px] text-muted-foreground">{hw.teacherName}</span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Цель и прогноз — «изюминка»: что нужно, чтобы вышла желаемая оценка */}
       {data.subjects.length > 0 && (

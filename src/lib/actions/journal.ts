@@ -560,3 +560,76 @@ export async function deleteAttendance(input: {
   refresh();
   return ok;
 }
+
+// ---------------------------------------------------------------------------
+// Домашние задания
+// ---------------------------------------------------------------------------
+
+const HOMEWORK_TITLE_MAX = 200;
+const HOMEWORK_DESC_MAX = 2000;
+
+/**
+ * Задать домашнее задание на урок конкретного дня (класс × предмет × день).
+ * Записей на день может быть несколько — учитель ведёт список.
+ */
+export async function saveHomework(input: {
+  teachingId: string;
+  date: string;
+  title: string;
+  description?: string | null;
+  dueDate?: string | null;
+}): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const teaching = await ownedTeaching(teacher.id, input.teachingId);
+  if (!teaching) return fail("not_found");
+
+  const day = parseDay(input.date);
+  if (!day) return fail("invalid_date");
+
+  const title = input.title.trim();
+  if (title.length === 0 || title.length > HOMEWORK_TITLE_MAX) {
+    return fail("invalid_homework_title");
+  }
+
+  const description = cleanComment(input.description);
+  if (description && description.length > HOMEWORK_DESC_MAX) {
+    return fail("invalid_homework_desc");
+  }
+
+  // Дедлайн необязателен, но если задан — не раньше дня урока.
+  let dueDate: Date | null = null;
+  if (input.dueDate) {
+    dueDate = parseDay(input.dueDate);
+    if (!dueDate) return fail("invalid_date");
+    if (dueDate.getTime() < day.getTime()) return fail("invalid_due_date");
+  }
+
+  await db.homework.create({
+    data: {
+      classId: teaching.classId,
+      subjectId: teaching.subjectId,
+      teacherId: teacher.id,
+      date: day,
+      dueDate,
+      title,
+      description,
+    },
+  });
+
+  refresh();
+  return ok;
+}
+
+/** Удалить задание — только своё (автор = текущий учитель). */
+export async function deleteHomework(input: { homeworkId: string }): Promise<ActionResult> {
+  const teacher = await requireTeacher();
+  const record = await db.homework.findFirst({
+    where: { id: input.homeworkId, teacherId: teacher.id },
+  });
+  if (!record) return fail("not_found");
+
+  await db.homework.delete({ where: { id: record.id } });
+
+  refresh();
+  return ok;
+}
