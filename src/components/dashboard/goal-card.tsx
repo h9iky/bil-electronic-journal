@@ -91,7 +91,7 @@ export function GoalCard({
       const result = next == null
         ? await clearGoal({ subjectId, quarter })
         : await saveGoal({ subjectId, quarter, targetGrade: next });
-      if (result.ok) toast(t("goalSet"));
+      if (result.ok) toast(t(next == null ? "goalCleared" : "goalSaved"));
       else toast(t(errorKey(result.error)), "error");
     });
   }
@@ -100,7 +100,7 @@ export function GoalCard({
     setTarget(null);
     startTransition(async () => {
       const result = await clearGoal({ subjectId, quarter });
-      if (result.ok) toast(t("goalSet"));
+      if (result.ok) toast(t("goalCleared"));
       else toast(t(errorKey(result.error)), "error");
     });
   }

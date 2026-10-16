@@ -105,6 +105,8 @@
     "goalWhatIf": "Егер мынадай балл алсам…",
     "goalPredicted": "Формула бойынша болжам",
     "goalClear": "Мақсатты жою",
+    "goalSaved": "Мақсат сақталды",
+    "goalCleared": "Мақсат жойылды",
     "goalHint": "Жүгірткіні жылжыт — болжам қайта есептеледі.",
     "goalErrorForbidden": "Пән сыныбыңда табылмады",
     "goalErrorInvalid": "Қате мән",

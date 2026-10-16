@@ -105,6 +105,8 @@
     "goalWhatIf": "What if I score…",
     "goalPredicted": "Formula forecast",
     "goalClear": "Clear goal",
+    "goalSaved": "Goal saved",
+    "goalCleared": "Goal cleared",
     "goalHint": "Drag the slider — the forecast updates live.",
     "goalErrorForbidden": "This subject isn't taught in your class",
     "goalErrorInvalid": "Invalid value",

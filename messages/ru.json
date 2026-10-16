@@ -105,6 +105,8 @@
     "goalWhatIf": "А если получу балл…",
     "goalPredicted": "Прогноз по формуле",
     "goalClear": "Убрать цель",
+    "goalSaved": "Цель сохранена",
+    "goalCleared": "Цель убрана",
     "goalHint": "Двигай ползунок — прогноз пересчитается.",
     "goalErrorForbidden": "Предмет не найден у тебя в классе",
     "goalErrorInvalid": "Некорректное значение",
