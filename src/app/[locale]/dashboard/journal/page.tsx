@@ -5,7 +5,6 @@ import { requireRole } from "@/lib/auth";
 import { getTeacherJournal, getTeacherJournalAttendance, getTeacherTeachings } from "@/lib/queries";
 import { parseDay, todayIso } from "@/lib/day";
 import { AppHeader } from "@/components/dashboard/app-header";
-import { ToastProvider } from "@/components/ui/toast";
 import { JournalView } from "@/components/journal/journal-view";
 
 const QUARTERS = [1, 2, 3, 4] as const;
@@ -112,9 +111,7 @@ export default async function JournalPage({
               </div>
             </div>
 
-            <ToastProvider>
-              <JournalView data={data} attendance={attendance} />
-            </ToastProvider>
+            <JournalView data={data} attendance={attendance} />
           </>
         )}
       </main>
