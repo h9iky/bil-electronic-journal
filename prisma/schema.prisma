@@ -40,6 +40,10 @@ model User {
 
   // как автор домашних заданий
   homeworkGiven         Homework[]      @relation("HomeworkByTeacher")
+
+  // Telegram-бот (Ask BIL)
+  telegramLink   TelegramLink?
+  telegramCodes  TelegramLinkCode[]
 }
 
 /// Класс: "10А". Настройки оценивания — в отдельной таблице ClassSettings.
@@ -284,4 +288,31 @@ model Homework {
   teacher User    @relation("HomeworkByTeacher", fields: [teacherId], references: [id])
 
   @@index([classId, subjectId, date])
+}
+
+/// Связь «аккаунт журнала ↔ Telegram»: одна привязка на пользователя.
+/// Бот Ask BIL не знает про пользователей — он спрашивает журнал по telegramId.
+model TelegramLink {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  telegramId String   @unique
+  username   String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Одноразовый код привязки: генерирует журнал в кабинете, «съедает» бот
+/// командой `/start <код>`. Живёт ограниченное время (см. lib/telegram.ts).
+model TelegramLinkCode {
+  id        String    @id @default(cuid())
+  userId    String
+  code      String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

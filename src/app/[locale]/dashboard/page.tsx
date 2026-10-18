@@ -11,6 +11,8 @@ import { AppHeader } from "@/components/dashboard/app-header";
 import { StudentView } from "@/components/dashboard/student-view";
 import { TeacherView } from "@/components/dashboard/teacher-view";
 import { AdminView } from "@/components/dashboard/admin-view";
+import { TelegramCard } from "@/components/dashboard/telegram-card";
+import { getTelegramLink } from "@/lib/telegram";
 
 export default async function DashboardPage({
   params,
@@ -42,6 +44,10 @@ export default async function DashboardPage({
         ? `${teacherData.length} • ${t("myClasses")}`
         : t("adminTitle");
 
+  // Привязка Telegram для бота Ask BIL (сам бот живёт отдельным процессом).
+  const telegramLink = await getTelegramLink(user.id);
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? null;
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader user={user} locale={locale} />
@@ -59,6 +65,11 @@ export default async function DashboardPage({
           </h1>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">{meta}</p>
         </div>
+
+        <TelegramCard
+          linked={telegramLink ? { username: telegramLink.username } : null}
+          botUsername={botUsername}
+        />
 
         {studentData && <StudentView data={studentData} />}
         {teacherData && <TeacherView blocks={teacherData} />}

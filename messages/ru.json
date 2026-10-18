@@ -120,6 +120,21 @@
     "homeworkYesterday": "Вчера",
     "homeworkDue": "сдать до {date}"
   },
+  "telegram": {
+    "title": "Telegram-бот",
+    "desc": "Ask BIL — домашние задания, оценки и напоминания прямо в Telegram.",
+    "linkedBadge": "Привязан",
+    "notLinked": "Не привязан",
+    "linkedLabel": "Привязанный аккаунт:",
+    "getCode": "Получить код",
+    "codeReady": "Код готов",
+    "codeHint": "Отправь боту эту команду:",
+    "codeExpires": "Код действует {minutes} минут",
+    "openBot": "Открыть бота",
+    "unlink": "Отвязать",
+    "unlinked": "Telegram отвязан",
+    "errorUnknown": "Не получилось, попробуй ещё раз"
+  },
   "journal": {
     "title": "Электронный журнал",
     "back": "В личный кабинет",

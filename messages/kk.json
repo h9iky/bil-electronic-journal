@@ -120,6 +120,21 @@
     "homeworkYesterday": "Кеше",
     "homeworkDue": "{date} дейін тапсыру"
   },
+  "telegram": {
+    "title": "Telegram-бот",
+    "desc": "Ask BIL — үй тапсырмасы, бағалар мен еске салғыштар Telegram-да.",
+    "linkedBadge": "Байланған",
+    "notLinked": "Байланбаған",
+    "linkedLabel": "Байланған аккаунт:",
+    "getCode": "Код алу",
+    "codeReady": "Код дайын",
+    "codeHint": "Ботқа осы команданы жібер:",
+    "codeExpires": "Код {minutes} минут жарамды",
+    "openBot": "Ботты ашу",
+    "unlink": "Ажырату",
+    "unlinked": "Telegram ажыратылды",
+    "errorUnknown": "Қате кетті, қайта көріңіз"
+  },
   "journal": {
     "title": "Электрондық журнал",
     "back": "Жеке кабинетке",

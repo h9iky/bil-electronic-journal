@@ -120,6 +120,21 @@
     "homeworkYesterday": "Yesterday",
     "homeworkDue": "due {date}"
   },
+  "telegram": {
+    "title": "Telegram bot",
+    "desc": "Ask BIL — homework, grades and reminders right inside Telegram.",
+    "linkedBadge": "Linked",
+    "notLinked": "Not linked",
+    "linkedLabel": "Linked account:",
+    "getCode": "Get code",
+    "codeReady": "Code is ready",
+    "codeHint": "Send the bot this command:",
+    "codeExpires": "The code is valid for {minutes} minutes",
+    "openBot": "Open the bot",
+    "unlink": "Unlink",
+    "unlinked": "Telegram unlinked",
+    "errorUnknown": "Something went wrong, try again"
+  },
   "journal": {
     "title": "Electronic journal",
     "back": "Back to dashboard",
