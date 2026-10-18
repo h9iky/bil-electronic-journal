@@ -24,6 +24,13 @@ function makeRandom(seed) {
 const random = makeRandom(20261014);
 const scoreFor = (max) => Math.round(max * (0.55 + random() * 0.45));
 
+/**
+ * Учебный день — всегда начало суток UTC (конвенция lib/day.ts).
+ * Локальное `new Date(y, m, d)` на хосте +05 уезжает на 5 часов назад
+ * и превращает «20 октября» в «19.10T19:00Z» — так делать нельзя.
+ */
+const day = (y, m, d) => new Date(Date.UTC(y, m, d));
+
 const STUDENTS = [
   ["Арман Қайрат", "student@bil.edu.kz"],
   ["Диас Сәдуақас", "dias@bil.edu.kz"],
@@ -148,7 +155,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "Формативті: функциялар мен қасиеттер",
       subjectId: subjects.math.id,
       maxScore: 10,
-      date: new Date(2026, 8, 10),
+      date: day(2026, 8, 10),
     },
   });
   const sas1 = await prisma.assessment.create({
@@ -160,7 +167,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "1-SAS: Тригонометриялық теңдеулер",
       subjectId: subjects.math.id,
       maxScore: 20,
-      date: new Date(2026, 8, 18),
+      date: day(2026, 8, 18),
     },
   });
   const sas2 = await prisma.assessment.create({
@@ -172,7 +179,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "2-SAS: Туынды есептері",
       subjectId: subjects.math.id,
       maxScore: 20,
-      date: new Date(2026, 9, 5),
+      date: day(2026, 9, 5),
     },
   });
   const sat = await prisma.assessment.create({
@@ -183,7 +190,7 @@ async function createAssessments({ klassId, subjects, sections, mathTeacherId })
       title: "1-SAT: тоқсандық жиынтық",
       subjectId: subjects.math.id,
       maxScore: 30,
-      date: new Date(2026, 9, 20),
+      date: day(2026, 9, 20),
     },
   });
 
@@ -229,7 +236,7 @@ async function createActivity(students, mathId, teacherId) {
           teacherId,
           value: 6 + Math.floor(random() * 5), // 6..10
           comment: comments[Math.floor(random() * comments.length)],
-          date: new Date(2026, 8, 5 + i),
+          date: day(2026, 8, 5 + i),
         },
       });
     }
@@ -253,7 +260,7 @@ async function createBehavior(students, klassId, teacherId) {
         kind: event.kind,
         points: event.points,
         comment: event.comment,
-        date: new Date(2026, 8, 10),
+        date: day(2026, 8, 10),
       },
     });
   }
@@ -262,11 +269,7 @@ async function createBehavior(students, klassId, teacherId) {
 async function createAttendance(students, klassId, subjectId, teacherId) {
   // Три учебных дня сентября 2026 — чтобы вкладка посещаемости была не пустой.
   // Дата — начало суток UTC: так выборка совпадает с уникальным ключом.
-  const days = [
-    new Date(Date.UTC(2026, 8, 22)),
-    new Date(Date.UTC(2026, 8, 24)),
-    new Date(Date.UTC(2026, 8, 26)),
-  ];
+  const days = [day(2026, 8, 22), day(2026, 8, 24), day(2026, 8, 26)];
   const spread = ["PRESENT", "PRESENT", "PRESENT", "PRESENT", "LATE", "ABSENT", "EXCUSED"];
   for (const date of days) {
     for (const student of students) {
@@ -322,7 +325,6 @@ async function createGoals(students, mathId) {
 async function createHomework({ klassId, subjects, mathTeacherId, csTeacherId }) {
   // Задания вокруг «сегодня» (2026-10-16, пт): есть прошедшие, сегодняшние и на
   // следующий учебный день — вкладка «Что задано» у ученика сразу живая.
-  const day = (y, m, d) => new Date(Date.UTC(y, m, d));
   const items = [
     {
       subjectId: subjects.math.id,
