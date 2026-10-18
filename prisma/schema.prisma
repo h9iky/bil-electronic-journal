@@ -44,6 +44,9 @@ model User {
   // Telegram-бот (Ask BIL)
   telegramLink   TelegramLink?
   telegramCodes  TelegramLinkCode[]
+
+  // личный план (планировщик ученика)
+  plannerTasks PlannerTask[]
 }
 
 /// Класс: "10А". Настройки оценивания — в отдельной таблице ClassSettings.
@@ -127,6 +130,7 @@ model Subject {
   goals          GradeGoal[]
   homework       Homework[]
   scheduleSlots  ScheduleSlot[]
+  plannerTasks   PlannerTask[]
 }
 
 /// Раздел/глава программы внутри четверти. К нему привязаны работы SAS (СОР).
@@ -305,6 +309,25 @@ model ScheduleSlot {
   subject Subject @relation(fields: [subjectId], references: [id])
 
   @@unique([classId, dayOfWeek, lessonNumber])
+}
+
+/// Личное дело ученика (планировщик): «к 20.10 сдать эссе».
+/// `date` — день (00:00 UTC, как у `Homework`), `time` — опциональные "HH:MM".
+model PlannerTask {
+  id        String   @id @default(cuid())
+  studentId String
+  date      DateTime // день дела, 00:00 UTC
+  time      String? // "HH:MM" или null (без конкретного времени)
+  title     String
+  done      Boolean  @default(false)
+  subjectId String? // необязательная привязка к предмету
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User     @relation(fields: [studentId], references: [id])
+  subject Subject? @relation(fields: [subjectId], references: [id])
+
+  @@index([studentId, date])
 }
 
 /// Связь «аккаунт журнала ↔ Telegram»: одна привязка на пользователя.

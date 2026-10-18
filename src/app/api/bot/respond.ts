@@ -11,6 +11,7 @@ const STATUS_BY_ERROR: Record<string, number> = {
   invalid_request: 400,
   not_a_student: 403,
   not_linked: 404,
+  not_found: 404,
   code_not_found: 404,
   code_expired: 410,
   code_used: 409,

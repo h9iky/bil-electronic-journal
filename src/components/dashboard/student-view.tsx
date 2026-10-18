@@ -2,12 +2,14 @@ import { getTranslations } from "next-intl/server";
 import {
   Award,
   BookOpenCheck,
+  CalendarDays,
   CheckCircle2,
   HeartHandshake,
   Sparkles,
   Target,
   TrendingUp,
 } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatSigned, round } from "@/lib/grading";
@@ -145,9 +147,18 @@ export async function StudentView({ data }: StudentViewProps) {
 
       {/* Что задано — домашние задания (то, ради чего открывают дневник каждый день) */}
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <BookOpenCheck className="h-4 w-4 text-primary" />
-          <h2 className="text-base font-bold">{t("homeworkTitle")}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <BookOpenCheck className="h-4 w-4 text-primary" />
+            <h2 className="text-base font-bold">{t("homeworkTitle")}</h2>
+          </div>
+          <Link
+            href="/dashboard/planner"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted/40"
+          >
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            {t("openPlanner")}
+          </Link>
         </div>
         <p className="text-xs text-muted-foreground -mt-1">{t("homeworkDesc")}</p>
         <Card className="border-border/60">

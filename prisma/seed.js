@@ -47,6 +47,7 @@ const STUDENTS = [
 ];
 
 async function clearAll() {
+  await prisma.plannerTask.deleteMany();
   await prisma.scheduleSlot.deleteMany();
   await prisma.homework.deleteMany();
   await prisma.gradeGoal.deleteMany();
@@ -411,6 +412,36 @@ async function createSchedule({ klassId, subjects }) {
   return lessons;
 }
 
+async function createPlannerTasks(studentId, subjects) {
+  // Личный план первого ученика: демо для страницы планера и бота (/plan).
+  const items = [
+    { date: day(2026, 9, 18), time: null, title: "Сдать книгу в библиотеку", done: true },
+    { date: day(2026, 9, 19), time: null, title: "Забрать форму у куратора" },
+    { date: day(2026, 9, 19), time: "18:00", title: "Сдать эссе по истории" },
+    {
+      date: day(2026, 9, 20),
+      time: "09:00",
+      title: "Подготовиться к SAS по физике",
+      subjectId: subjects.physics.id,
+    },
+    { date: day(2026, 9, 22), time: "16:30", title: "Кружок робототехники" },
+  ];
+
+  for (const item of items) {
+    await prisma.plannerTask.create({
+      data: {
+        studentId,
+        date: item.date,
+        time: item.time ?? null,
+        title: item.title,
+        done: item.done ?? false,
+        subjectId: item.subjectId ?? null,
+      },
+    });
+  }
+  return items.length;
+}
+
 async function main() {
   console.log("🌱 Деректер базасын толтыру (seeding)...");
   await clearAll();
@@ -447,9 +478,10 @@ async function main() {
     csTeacherId: csTeacher.id,
   });
   const scheduleLessons = await createSchedule({ klassId: klass.id, subjects });
+  const plannerTasks = await createPlannerTasks(students[0].id, subjects);
 
   console.log(
-    `✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик), 5 үй тапсырмасы, ${scheduleLessons} сабақ кестеде.`,
+    `✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик), 5 үй тапсырмасы, ${scheduleLessons} сабақ кестеде, ${plannerTasks} жеке іс.`,
   );
 }
 
