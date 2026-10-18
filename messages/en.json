@@ -92,6 +92,7 @@
     "name": "Full name",
     "email": "Email",
     "registeredAt": "Registered at",
+    "openClassSettings": "Open grading rules",
     "goalTitle": "Goal & forecast",
     "goalDesc": "Set a goal — we'll show what it takes on the upcoming work",
     "goalSet": "Your goal",
@@ -180,6 +181,11 @@
     "proposalRejected": "Proposal rejected.",
     "proposalReset": "Reset to pending.",
     "proposalDeleted": "Proposal deleted.",
+    "rulesTitle": "Class grading rules",
+    "rulesWeights": "Weights: SAS {sas}% · SAT {sat}% · Formative {formative}%",
+    "rulesThresholds": "Thresholds: ≥{five}% → 5 · ≥{four}% → 4 · ≥{three}% → 3",
+    "rulesRounding": "Rounding: {mode}",
+    "rulesNote": "Configured by the admin",
     "proposalDeleteConfirm": "Delete the proposal?",
     "error": {
       "unknown": "The action could not be completed.",
@@ -259,5 +265,45 @@
     "delete": "Delete",
     "saved": "Assignment added",
     "deleted": "Assignment removed"
+  },
+  "rounding": {
+    "HALF_UP": "Half up (0.5↑)",
+    "FLOOR": "Down (floor)",
+    "CEIL": "Up (ceil)",
+    "NONE": "No rounding"
+  },
+  "classSettings": {
+    "title": "Class grading settings",
+    "back": "Back",
+    "statusDefault": "Default values",
+    "statusCustom": "Custom values",
+    "notFound": "Class not found",
+    "weightsTitle": "Quarter grade weights",
+    "weightsHint": "How each work type contributes to the quarter grade. Weights are normalized automatically — the sum does not have to be 100%.",
+    "weightSas": "SAS (per section), %",
+    "weightSat": "SAT (per quarter), %",
+    "weightFormative": "Formative, %",
+    "weightSum": "Sum: {sum}%",
+    "thresholdsTitle": "Grade thresholds",
+    "thresholdsHint": "Minimum percent for a grade. Strictly ascending: 3 < 4 < 5.",
+    "thresholdThree": "3 and above, %",
+    "thresholdFour": "4 and above, %",
+    "thresholdFive": "5 and above, %",
+    "previewTitle": "Percent → quarter grade",
+    "previewInvalid": "Fix the thresholds to see the scale.",
+    "roundingTitle": "Percent rounding",
+    "roundingHint": "How to round the quarter percent before converting it to a grade.",
+    "roundingLabel": "Mode",
+    "save": "Save",
+    "saved": "Grading settings saved",
+    "reset": "Default values",
+    "resetDone": "Defaults filled in — press “Save”.",
+    "error": {
+      "unknown": "Unknown error",
+      "not_found": "Class not found.",
+      "invalid_weights": "Check weights: integers 0–100, at least one above zero.",
+      "invalid_thresholds": "Check thresholds: integers 1–100, strictly ascending (3 < 4 < 5).",
+      "invalid_rounding": "Invalid rounding mode."
+    }
   }
 }

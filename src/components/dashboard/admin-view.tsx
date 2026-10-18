@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { Layers, BookOpen, Users } from "lucide-react";
+import { Layers, BookOpen, Users, Settings2 } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { isRole, type Role } from "@/lib/constants";
@@ -25,7 +26,24 @@ export async function AdminView({ data }: AdminViewProps) {
       title: t("totalClasses"),
       value: data.totalClasses,
       icon: Layers,
-      hint: data.classNames.join(", ") || "—",
+      hint:
+        data.classes.length === 0 ? (
+          "—"
+        ) : (
+          <span className="flex flex-wrap gap-1.5">
+            {data.classes.map((klass) => (
+              <Link
+                key={klass.id}
+                href={`/dashboard/classes/${klass.id}/settings`}
+                title={t("openClassSettings")}
+                className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card px-2 py-0.5 text-xs font-medium text-foreground transition hover:border-primary/50 hover:text-primary"
+              >
+                <Settings2 className="h-3 w-3" />
+                {klass.name}
+              </Link>
+            ))}
+          </span>
+        ),
     },
     {
       title: t("totalSubjects"),

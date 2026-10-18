@@ -14,6 +14,7 @@ import { AssessmentActions } from "./assessment-actions";
 import { NewAssessmentForm } from "./new-assessment-form";
 import { QuickActions } from "./quick-actions";
 import { JournalRecords } from "./journal-records";
+import { ClassRulesPanel } from "./class-rules-panel";
 
 interface JournalViewProps {
   data: JournalData;
@@ -31,6 +32,9 @@ export async function JournalView({ data, attendance, homework }: JournalViewPro
 
   return (
     <div className="space-y-6">
+      {/* По каким правилам считается четвертная — read-only, настраивает админ */}
+      <ClassRulesPanel rules={data.rules} />
+
       {/* Управление работами */}
       <Card className="border-border/60">
         <CardHeader className="pb-3">

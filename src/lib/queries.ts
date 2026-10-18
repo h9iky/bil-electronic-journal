@@ -76,11 +76,18 @@ function addToGroup(group: GroupScore, score: number | null, maxScore: number): 
   group.count += 1;
 }
 
-/** Настройки оценивания класса или дефолт, если их ещё не задали. */
-export async function loadGradingRules(classId: string | null): Promise<GradingRules> {
-  if (!classId) return DEFAULT_RULES;
-
-  const settings = await db.classSettings.findUnique({ where: { classId } });
+/** Строка `ClassSettings` из БД → правила оценивания (или дефолты, если строки нет). */
+function toGradingRules(
+  settings: {
+    sasWeight: number;
+    satWeight: number;
+    formativeWeight: number;
+    thresholdThree: number;
+    thresholdFour: number;
+    thresholdFive: number;
+    rounding: string;
+  } | null,
+): GradingRules {
   if (!settings) return DEFAULT_RULES;
 
   return {
@@ -95,6 +102,42 @@ export async function loadGradingRules(classId: string | null): Promise<GradingR
       five: settings.thresholdFive,
     },
     rounding: isRoundingMode(settings.rounding) ? settings.rounding : DEFAULT_ROUNDING,
+  };
+}
+
+/** Настройки оценивания класса или дефолт, если их ещё не задали. */
+export async function loadGradingRules(classId: string | null): Promise<GradingRules> {
+  if (!classId) return DEFAULT_RULES;
+  const settings = await db.classSettings.findUnique({ where: { classId } });
+  return toGradingRules(settings);
+}
+
+/** Класс + актуальные правила оценивания — для страницы настроек (админ). */
+export interface ClassSettingsData {
+  classId: string;
+  className: string;
+  year: string;
+  /** Строка `ClassSettings` существует в БД (иначе действуют дефолты стандарта). */
+  customized: boolean;
+  rules: GradingRules;
+}
+
+/** Данные страницы «Настройки оценивания класса». `null` — класса нет. */
+export async function getClassSettingsData(
+  classId: string,
+): Promise<ClassSettingsData | null> {
+  const klass = await db.klass.findUnique({
+    where: { id: classId },
+    include: { settings: true },
+  });
+  if (!klass) return null;
+
+  return {
+    classId: klass.id,
+    className: klass.name,
+    year: klass.year,
+    customized: klass.settings != null,
+    rules: toGradingRules(klass.settings),
   };
 }
 
@@ -853,11 +896,18 @@ export interface AdminUserRow {
   createdAt: Date;
 }
 
+export interface AdminClassRow {
+  id: string;
+  name: string;
+  year: string;
+}
+
 export interface AdminDashboard {
   totalUsers: number;
   totalClasses: number;
   totalSubjects: number;
-  classNames: string[];
+  /** Классы со ссылкой на настройки оценивания. */
+  classes: AdminClassRow[];
   subjectNames: string[];
   users: AdminUserRow[];
 }
@@ -868,7 +918,10 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
       db.user.count(),
       db.klass.count(),
       db.subject.count(),
-      db.klass.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
+      db.klass.findMany({
+        select: { id: true, name: true, year: true },
+        orderBy: { name: "asc" },
+      }),
       db.subject.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
       db.user.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
     ]);
@@ -877,7 +930,7 @@ export async function getAdminDashboard(): Promise<AdminDashboard> {
     totalUsers,
     totalClasses,
     totalSubjects,
-    classNames: classes.map((c) => c.name),
+    classes,
     subjectNames: subjects.map((s) => s.name),
     users,
   };
