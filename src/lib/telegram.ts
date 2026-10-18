@@ -20,6 +20,16 @@ import { isRole, type Role } from "./constants";
 /** Сколько минут живёт код привязки. */
 export const TELEGRAM_CODE_TTL_MINUTES = 10;
 
+/** Языки, на которых бот умеет говорить (см. locales в ask-bil). */
+export const BOT_LOCALES = ["ru", "kk", "en"] as const;
+export type BotLocale = (typeof BOT_LOCALES)[number];
+
+export const isBotLocale = (v: unknown): v is BotLocale =>
+  typeof v === "string" && (BOT_LOCALES as readonly string[]).includes(v);
+
+/** Приводим язык к известному: мусор из базы не должен ронять бот. */
+export const normalizeBotLocale = (v: string): BotLocale => (isBotLocale(v) ? v : "ru");
+
 /** Профиль аккаунта журнала, который бот показывает в Telegram. */
 export interface BotProfile {
   userId: string;
@@ -29,6 +39,9 @@ export interface BotProfile {
   className: string | null;
   /** Предметы учителя (пусто у остальных ролей). */
   subjects: string[];
+  /** Язык сообщений бота и тумблер вечерней сводки. */
+  locale: BotLocale;
+  digestEnabled: boolean;
 }
 
 /** Результат привязки: либо профиль, либо машинный код ошибки для бота. */
@@ -178,6 +191,7 @@ export async function getBotProfile(userId: string): Promise<BotProfile | null> 
         take: 1,
       },
       teachings: { select: { subject: { select: { name: true } } } },
+      telegramLink: { select: { locale: true, digestEnabled: true } },
     },
   });
   if (!user || !isRole(user.role)) return null;
@@ -191,6 +205,8 @@ export async function getBotProfile(userId: string): Promise<BotProfile | null> 
       user.role === "TEACHER"
         ? [...new Set(user.teachings.map((teaching) => teaching.subject.name))]
         : [],
+    locale: normalizeBotLocale(user.telegramLink?.locale ?? "ru"),
+    digestEnabled: user.telegramLink?.digestEnabled ?? true,
   };
 }
 
@@ -201,6 +217,31 @@ export async function getProfileByTelegramId(telegramId: string): Promise<BotPro
     select: { userId: true },
   });
   if (!link) return null;
+  return getBotProfile(link.userId);
+}
+
+/**
+ * Настройки бота (§5): язык сообщений и тумблер вечерней сводки.
+ * Возвращаем свежий профиль; `null` — Telegram не привязан.
+ */
+export async function updateBotSettings(params: {
+  telegramId: string;
+  locale?: BotLocale;
+  digestEnabled?: boolean;
+}): Promise<BotProfile | null> {
+  const link = await db.telegramLink.findUnique({
+    where: { telegramId: params.telegramId },
+    select: { userId: true },
+  });
+  if (!link) return null;
+
+  await db.telegramLink.update({
+    where: { telegramId: params.telegramId },
+    data: {
+      ...(params.locale !== undefined ? { locale: params.locale } : {}),
+      ...(params.digestEnabled !== undefined ? { digestEnabled: params.digestEnabled } : {}),
+    },
+  });
   return getBotProfile(link.userId);
 }
 

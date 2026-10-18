@@ -332,12 +332,15 @@ model PlannerTask {
 
 /// Связь «аккаунт журнала ↔ Telegram»: одна привязка на пользователя.
 /// Бот Ask BIL не знает про пользователей — он спрашивает журнал по telegramId.
+/// Здесь же живут настройки бота: язык сообщений и тумблер вечерней сводки.
 model TelegramLink {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  telegramId String   @unique
-  username   String?
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  telegramId    String   @unique
+  username      String?
+  locale        String   @default("ru") // ru | kk | en — язык сообщений бота
+  digestEnabled Boolean  @default(true) // вечерняя сводка
+  createdAt     DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

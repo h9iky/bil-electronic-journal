@@ -286,11 +286,16 @@ export async function getStudentDigest(
 
 // --- Получатели рассылки ---
 
-/** Кому бот может писать: привязанные ученики (учителя пока не получатели). */
-export async function listLinkedStudents(): Promise<{ telegramId: string }[]> {
+/**
+ * Кому бот может писать: привязанные ученики, не выключившие сводку.
+ * Отдаём и язык — бот собирает каждому сообщение на его языке.
+ */
+export async function listLinkedStudents(): Promise<
+  { telegramId: string; locale: string }[]
+> {
   return db.telegramLink.findMany({
-    where: { user: { role: "STUDENT" } },
-    select: { telegramId: true },
+    where: { user: { role: "STUDENT" }, digestEnabled: true },
+    select: { telegramId: true, locale: true },
     orderBy: { createdAt: "asc" },
   });
 }
