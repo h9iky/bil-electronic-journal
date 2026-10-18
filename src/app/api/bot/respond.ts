@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 const STATUS_BY_ERROR: Record<string, number> = {
   unauthorized: 401,
   invalid_request: 400,
+  not_a_student: 403,
   not_linked: 404,
   code_not_found: 404,
   code_expired: 410,
