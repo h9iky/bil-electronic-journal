@@ -1,5 +1,6 @@
 /**
- * Данные для команд бота Ask BIL: `/hw`, `/marks` и вечерний дайджест.
+ * Данные для команд бота Ask BIL: `/hw`, `/marks`, `/today`
+ * и вечерний дайджест.
  *
  * Только чтение. Математика берётся из `queries.ts`/`grading.ts` — поэтому
  * цифры в Telegram совпадают с сайтом. Своих формул здесь нет и быть не должно.
@@ -8,6 +9,7 @@
 import { db } from "./db";
 import { formatDay, parseDay } from "./day";
 import { getStudentDashboard } from "./queries";
+import { SCHOOL_DAYS, isoDayOfWeek } from "./schedule";
 
 /** Максимум дней в диапазоне домашки — защита от «дай всё за год». */
 const MAX_HOMEWORK_SPAN_DAYS = 31;
@@ -88,6 +90,56 @@ export async function getStudentHomeworkRange(
   });
 
   return rows.map(toBotHomework);
+}
+
+// --- Расписание ---
+
+export interface BotScheduleSlot {
+  /** Номер урока в дне (1..7). */
+  lesson: number;
+  subject: string;
+}
+
+export interface BotDaySchedule {
+  /** День недели: 1=Пн..7=Вс. */
+  dayOfWeek: number;
+  className: string | null;
+  slots: BotScheduleSlot[];
+}
+
+/**
+ * Расписание класса ученика на день (`dateIso`).
+ * `null` — битая дата или ученик не состоит в классе.
+ */
+export async function getStudentDaySchedule(
+  studentId: string,
+  dateIso: string,
+): Promise<BotDaySchedule | null> {
+  const dayOfWeek = isoDayOfWeek(dateIso);
+  if (!dayOfWeek) return null;
+
+  const enrollment = await db.enrollment.findFirst({
+    where: { studentId },
+    include: { klass: true },
+  });
+  if (!enrollment) return null;
+
+  // В субботу и воскресенье уроков по определению нет — пустой список.
+  if (dayOfWeek > SCHOOL_DAYS) {
+    return { dayOfWeek, className: enrollment.klass.name, slots: [] };
+  }
+
+  const rows = await db.scheduleSlot.findMany({
+    where: { classId: enrollment.classId, dayOfWeek },
+    include: { subject: true },
+    orderBy: { lessonNumber: "asc" },
+  });
+
+  return {
+    dayOfWeek,
+    className: enrollment.klass.name,
+    slots: rows.map((row) => ({ lesson: row.lessonNumber, subject: row.subject.name })),
+  };
 }
 
 // --- Оценки ---

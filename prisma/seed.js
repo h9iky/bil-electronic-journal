@@ -47,6 +47,7 @@ const STUDENTS = [
 ];
 
 async function clearAll() {
+  await prisma.scheduleSlot.deleteMany();
   await prisma.homework.deleteMany();
   await prisma.gradeGoal.deleteMany();
   await prisma.attendance.deleteMany();
@@ -382,6 +383,34 @@ async function createHomework({ klassId, subjects, mathTeacherId, csTeacherId })
   }
 }
 
+async function createSchedule({ klassId, subjects }) {
+  // Рабочая неделя 10А (Пн–Пт) из предметов, которые классу преподают, —
+  // тех же трёх Teaching'ов из сида. Индекс в массиве = номер урока.
+  const week = [
+    [subjects.math.id, subjects.physics.id, subjects.cs.id],
+    [subjects.physics.id, subjects.math.id, subjects.cs.id, subjects.math.id],
+    [subjects.math.id, subjects.cs.id, subjects.physics.id],
+    [subjects.cs.id, subjects.physics.id, subjects.math.id, subjects.cs.id],
+    [subjects.math.id, subjects.math.id, subjects.physics.id],
+  ];
+
+  let lessons = 0;
+  for (const [dayIndex, daySubjects] of week.entries()) {
+    for (const [lessonIndex, subjectId] of daySubjects.entries()) {
+      await prisma.scheduleSlot.create({
+        data: {
+          classId: klassId,
+          dayOfWeek: dayIndex + 1,
+          lessonNumber: lessonIndex + 1,
+          subjectId,
+        },
+      });
+      lessons += 1;
+    }
+  }
+  return lessons;
+}
+
 async function main() {
   console.log("🌱 Деректер базасын толтыру (seeding)...");
   await clearAll();
@@ -417,8 +446,11 @@ async function main() {
     mathTeacherId: mathTeacher.id,
     csTeacherId: csTeacher.id,
   });
+  const scheduleLessons = await createSchedule({ klassId: klass.id, subjects });
 
-  console.log(`✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик), 5 үй тапсырмасы.`);
+  console.log(
+    `✅ Дайын: ${students.length} оқушы, 1 сынып, 4 жұмыс (1 черновик), 5 үй тапсырмасы, ${scheduleLessons} сабақ кестеде.`,
+  );
 }
 
 main()

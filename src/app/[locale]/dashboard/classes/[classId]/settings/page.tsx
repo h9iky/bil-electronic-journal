@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ArrowLeft, Settings2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Settings2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth";
 import { getClassSettingsData } from "@/lib/queries";
@@ -50,6 +50,15 @@ export default async function ClassSettingsPage({
                 {data.customized ? t("statusCustom") : t("statusDefault")}
               </Badge>
             </p>
+          )}
+          {data && (
+            <Link
+              href={`/dashboard/classes/${data.classId}/schedule`}
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              <CalendarDays className="h-3.5 w-3.5" />
+              {t("openSchedule")}
+            </Link>
           )}
         </div>
 

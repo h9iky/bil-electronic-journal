@@ -293,6 +293,7 @@
     "statusDefault": "Default values",
     "statusCustom": "Custom values",
     "notFound": "Class not found",
+    "openSchedule": "Class schedule",
     "weightsTitle": "Quarter grade weights",
     "weightsHint": "How each work type contributes to the quarter grade. Weights are normalized automatically — the sum does not have to be 100%.",
     "weightSas": "SAS (per section), %",
@@ -319,6 +320,30 @@
       "invalid_weights": "Check weights: integers 0–100, at least one above zero.",
       "invalid_thresholds": "Check thresholds: integers 1–100, strictly ascending (3 < 4 < 5).",
       "invalid_rounding": "Invalid rounding mode."
+    }
+  },
+  "schedule": {
+    "title": "Class schedule",
+    "back": "Back",
+    "openSettings": "Grading settings",
+    "gridTitle": "Lesson grid",
+    "hint": "Day × lesson. Empty value removes the lesson; changes save instantly.",
+    "lesson": "Lesson",
+    "empty": "—",
+    "saved": "Lesson saved",
+    "cleared": "Lesson removed",
+    "notFound": "Class not found",
+    "noSubjects": "No subjects taught in this class yet — create Teaching rows first (teacher × subject × class).",
+    "day1": "Mon",
+    "day2": "Tue",
+    "day3": "Wed",
+    "day4": "Thu",
+    "day5": "Fri",
+    "error": {
+      "invalid_slot": "Invalid day or lesson number",
+      "not_found": "Class not found",
+      "subject_not_in_class": "This subject is not taught in this class",
+      "unknown": "Could not save"
     }
   }
 }

@@ -62,6 +62,7 @@ model Klass {
   proposedGrades  ProposedGrade[]
   attendance      Attendance[]
   homework        Homework[]
+  scheduleSlots   ScheduleSlot[]
 }
 
 /// Настройки оценивания класса: веса, пороги, округление, лимиты работ.
@@ -125,6 +126,7 @@ model Subject {
   attendance     Attendance[]
   goals          GradeGoal[]
   homework       Homework[]
+  scheduleSlots  ScheduleSlot[]
 }
 
 /// Раздел/глава программы внутри четверти. К нему привязаны работы SAS (СОР).
@@ -288,6 +290,21 @@ model Homework {
   teacher User    @relation("HomeworkByTeacher", fields: [teacherId], references: [id])
 
   @@index([classId, subjectId, date])
+}
+
+/// Урок в расписании класса: день недели (1=Пн..5=Пт) × номер урока (1..7).
+/// Учитель не хранится — он уже определён в `Teaching` (учитель × предмет × класс).
+model ScheduleSlot {
+  id           String @id @default(cuid())
+  classId      String
+  dayOfWeek    Int // 1..5
+  lessonNumber Int // 1..7
+  subjectId    String
+
+  klass   Klass   @relation(fields: [classId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([classId, dayOfWeek, lessonNumber])
 }
 
 /// Связь «аккаунт журнала ↔ Telegram»: одна привязка на пользователя.
