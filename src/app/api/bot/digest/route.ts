@@ -3,11 +3,11 @@ import { getProfileByTelegramId, isBotAuthorized, isTelegramId } from "@/lib/tel
 import { botError, botOk } from "../respond";
 
 const DEFAULT_DAYS = 2;
-const MAX_DAYS = 14;
 
 /**
  * GET /api/bot/digest?telegramId=&from=YYYY-MM-DD&days=2
  * Вечерний дайджест: что задано на завтра, что сдать завтра, работы рядом.
+ * Битые `from`/`days` ловит `getStudentDigest` и отдаёт `null` → 400.
  */
 export async function GET(request: Request) {
   if (!isBotAuthorized(request)) return botError("unauthorized");
@@ -18,9 +18,7 @@ export async function GET(request: Request) {
   const daysParam = params.get("days");
   const days = daysParam === null ? DEFAULT_DAYS : Number(daysParam);
 
-  if (!isTelegramId(telegramId) || !from || !Number.isInteger(days) || days < 1 || days > MAX_DAYS) {
-    return botError("invalid_request");
-  }
+  if (!isTelegramId(telegramId) || !from) return botError("invalid_request");
 
   const profile = await getProfileByTelegramId(telegramId);
   if (!profile) return botError("not_linked");
