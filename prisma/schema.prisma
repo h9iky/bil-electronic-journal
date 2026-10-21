@@ -49,12 +49,17 @@ model User {
   plannerTasks PlannerTask[]
 }
 
-/// Класс: "10А". Настройки оценивания — в отдельной таблице ClassSettings.
+/// Класс: "10A" (номер 7–11 × буква A–E, латиница). Название собирается
+/// из номера и буквы — см. src/lib/klass.ts. Настройки оценивания — в ClassSettings.
 model Klass {
   id        String  @id @default(cuid())
-  name      String // "10А"
-  year      String // "2025/2026"
+  name      String // "10A"
+  year      String // "2026/2027"
   curatorId String? // классный руководитель
+
+  /// В одном учебном году класс с таким именем один: иначе «10A» начнёт
+  /// плодиться, и ученику на регистрации будет из чего выбирать непонятно что.
+  @@unique([name, year])
 
   curator         User?            @relation(fields: [curatorId], references: [id])
   settings        ClassSettings?

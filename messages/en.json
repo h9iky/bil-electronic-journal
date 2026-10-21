@@ -93,6 +93,7 @@
     "email": "Email",
     "registeredAt": "Registered at",
     "openClassSettings": "Open grading rules",
+    "openClasses": "Class directory",
     "openPlanner": "My week plan",
     "goalTitle": "Goal & forecast",
     "goalDesc": "Set a goal — we'll show what it takes on the upcoming work",
@@ -321,6 +322,39 @@
       "invalid_weights": "Check weights: integers 0–100, at least one above zero.",
       "invalid_thresholds": "Check thresholds: integers 1–100, strictly ascending (3 < 4 < 5).",
       "invalid_rounding": "Invalid rounding mode."
+    }
+  },
+  "classes": {
+    "title": "School classes",
+    "subtitle": "Class directory: grade 7–11 × letter A–E. Students pick their class here on sign-up — so we don't create empty classes.",
+    "back": "Back",
+    "createTitle": "New class",
+    "createHint": "The name is built from grade and letter: 10A, 7B. Academic year looks like 2026/2027.",
+    "grade": "Grade",
+    "letter": "Letter",
+    "year": "Academic year",
+    "yearPlaceholder": "2026/2027",
+    "preview": "Class name",
+    "create": "Create class",
+    "created": "Class {name} created",
+    "listTitle": "Classes",
+    "listHint": "Grading settings and the schedule open from the class row.",
+    "empty": "No classes yet — create the first one.",
+    "colClass": "Class",
+    "colYear": "Year",
+    "colActions": "Actions",
+    "students": "Students",
+    "teachers": "Teachers",
+    "curator": "Class teacher",
+    "noCurator": "not assigned",
+    "settings": "Settings",
+    "schedule": "Schedule",
+    "error": {
+      "invalid_grade": "Grade must be 7, 8, 9, 10 or 11.",
+      "invalid_letter": "Class letter must be A to E.",
+      "invalid_year": "Academic year must look like 2026/2027: four digits, slash, the next year.",
+      "already_exists": "This class already exists in that academic year.",
+      "unknown": "Could not create the class."
     }
   },
   "schedule": {

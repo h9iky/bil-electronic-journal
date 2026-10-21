@@ -26,6 +26,7 @@ import {
   type ProposalStatus,
 } from "./constants";
 import { formatDay, parseDay, todayIso } from "./day";
+import { compareClasses } from "./klass";
 import {
   averageActivity,
   behaviorBalance,
@@ -910,6 +911,50 @@ export interface AdminDashboard {
   classes: AdminClassRow[];
   subjectNames: string[];
   users: AdminUserRow[];
+}
+
+// ---------------------------------------------------------------------------
+// Справочник классов (админ)
+// ---------------------------------------------------------------------------
+
+/** Строка справочника: состав класса, куратор, индивидуальные настройки. */
+export interface ClassOverviewRow {
+  id: string;
+  name: string;
+  year: string;
+  students: number;
+  teachers: number;
+  curator: string | null;
+  /** `ClassSettings` заведены вручную (иначе действует стандарт). */
+  customized: boolean;
+}
+
+/**
+ * Все классы школы для справочника.
+ *
+ * Сортировка не лексикографическая («10A» < «7A»), а человеческая:
+ * свежий учебный год сверху, внутри — номер 7→11, затем буква.
+ */
+export async function getClassesOverview(): Promise<ClassOverviewRow[]> {
+  const classes = await db.klass.findMany({
+    include: {
+      _count: { select: { enrollments: true, teachings: true } },
+      curator: { select: { fullName: true } },
+      settings: { select: { id: true } },
+    },
+  });
+
+  return classes
+    .map((klass) => ({
+      id: klass.id,
+      name: klass.name,
+      year: klass.year,
+      students: klass._count.enrollments,
+      teachers: klass._count.teachings,
+      curator: klass.curator?.fullName ?? null,
+      customized: klass.settings != null,
+    }))
+    .sort(compareClasses);
 }
 
 export async function getAdminDashboard(): Promise<AdminDashboard> {

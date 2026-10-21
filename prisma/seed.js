@@ -90,8 +90,8 @@ async function createUsers() {
 async function createClass(curatorId) {
   const klass = await prisma.klass.create({
     data: {
-      name: "10А",
-      year: "2025/2026",
+      name: "10A",
+      year: "2026/2027",
       curatorId,
       settings: {
         create: {
