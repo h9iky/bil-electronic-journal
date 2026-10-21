@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { isRole, type Role } from "./constants";
+import { normalizeEmail } from "./registration";
+import { verifyPassword } from "./password";
 import { SESSION_COOKIE, decodeSession, encodeSession } from "./session";
 
 /**
@@ -69,8 +71,9 @@ export async function clearSessionUser() {
 }
 
 /**
- * Вход по email. Паролей пока нет — это демо-режим для защиты проекта:
- * аккаунты заводятся сидом, права всё равно проверяются на сервере.
+ * Демо-вход кнопкой: аккаунты из сида, у них нет пароля. Это осознанная
+ * фича для защиты проекта — кнопки ведут на фиксированные демо-емейлы,
+ * а права всё равно проверяются на сервере.
  */
 export async function loginWithRole(email: string, locale: string) {
   "use server";
@@ -78,6 +81,28 @@ export async function loginWithRole(email: string, locale: string) {
 
   if (!user) {
     redirect(`/${locale}/login?error=not_found`);
+  }
+
+  await setSessionUser(user.id);
+  redirect(`/${locale}/dashboard`);
+}
+
+/**
+ * Вход по email + паролю. Аккаунты без `passwordHash` (демо из сида) так
+ * не входят — им остаются кнопки быстрого входа.
+ */
+export async function loginWithPassword(email: string, password: string, locale: string) {
+  "use server";
+  const user = await db.user.findUnique({
+    where: { email: normalizeEmail(email) },
+    // Глобальный omit скрывает хеш по умолчанию — здесь он нужен явно.
+    select: { id: true, passwordHash: true },
+  });
+
+  // Одна ошибка на «нет такого» и «неверный пароль» — не подсказываем,
+  // какие email зарегистрированы.
+  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    redirect(`/${locale}/login?error=invalid_credentials`);
   }
 
   await setSessionUser(user.id);

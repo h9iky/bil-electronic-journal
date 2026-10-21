@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { loginWithRole } from "@/lib/auth";
+import { loginWithPassword, loginWithRole } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,12 @@ export default async function LoginPage({
               {sp.error === "not_found" && (
                 <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-center text-xs font-medium text-destructive">
                   {t("errorNotFound")}
+                </div>
+              )}
+
+              {sp.error === "invalid_credentials" && (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-center text-xs font-medium text-destructive">
+                  {t("errorInvalidCredentials")}
                 </div>
               )}
 
@@ -184,8 +190,9 @@ export default async function LoginPage({
                 action={async (formData: FormData) => {
                   "use server";
                   const email = formData.get("email")?.toString() || "";
-                  if (email) {
-                    await loginWithRole(email, locale);
+                  const password = formData.get("password")?.toString() || "";
+                  if (email && password) {
+                    await loginWithPassword(email, password, locale);
                   }
                 }}
                 className="space-y-3"
@@ -199,7 +206,22 @@ export default async function LoginPage({
                     name="email"
                     type="email"
                     required
+                    autoComplete="email"
                     placeholder={t("emailPlaceholder")}
+                    className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-xs font-medium text-foreground mb-1.5">
+                    {t("passwordLabel")}
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    placeholder={t("passwordPlaceholder")}
                     className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
                   />
                 </div>
@@ -207,6 +229,13 @@ export default async function LoginPage({
                   {t("submit")}
                 </Button>
               </form>
+
+              <p className="text-center text-xs text-muted-foreground">
+                {t("noAccount")}{" "}
+                <Link href="/register" className="font-semibold text-primary hover:underline">
+                  {t("registerLink")}
+                </Link>
+              </p>
 
               {/* Security Badge */}
               <div className="rounded-lg bg-muted/50 p-3 text-center border border-border/50">

@@ -12,6 +12,7 @@ import { refresh } from "next/cache";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { validateClass } from "@/lib/klass";
+import { isUniqueViolation } from "@/lib/prisma-errors";
 import type { ActionResult } from "./journal";
 
 /** Только админ. Бросаем — такие вызовы не должны случаться из UI. */
@@ -19,16 +20,6 @@ async function requireAdmin() {
   const user = await getSessionUser();
   if (!user || user.role !== "ADMIN") throw new Error("Forbidden");
   return user;
-}
-
-/** Гонка двух админов на одинаковом классе — ловится уникальным индексом. */
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === "P2002"
-  );
 }
 
 /**

@@ -903,6 +903,21 @@ export interface AdminClassRow {
   year: string;
 }
 
+/** Минимум для селекта класса на регистрации: имя и год, без состава. */
+export interface ClassOption {
+  id: string;
+  name: string;
+  year: string;
+}
+
+/** Классы для выбора при регистрации — в человеческом порядке (год ↓, 7→11). */
+export async function getClassOptions(): Promise<ClassOption[]> {
+  const classes = await db.klass.findMany({
+    select: { id: true, name: true, year: true },
+  });
+  return classes.sort(compareClasses);
+}
+
 export interface AdminDashboard {
   totalUsers: number;
   totalClasses: number;

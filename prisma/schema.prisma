@@ -12,38 +12,40 @@ datasource db {
 
 /// Пользователь: ученик, учитель или админ. Роли — см. constants.ts: ROLES.
 model User {
-  id        String   @id @default(cuid())
-  fullName  String
-  email     String   @unique
-  role      String   @default("STUDENT") // STUDENT | TEACHER | ADMIN
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  fullName     String
+  email        String   @unique
+  role         String   @default("STUDENT") // STUDENT | TEACHER | ADMIN
+  /// scrypt-хеш пароля. `null` — демо-аккаунт из сида: вход только кнопкой.
+  passwordHash String?
+  createdAt    DateTime @default(now())
 
   // как ученик
   enrollments           Enrollment[]
   studyGrades           Grade[]
-  studentActivityScores ActivityScore[]   @relation("StudentActivityScores")
-  studentBehavior       BehaviorRecord[]  @relation("StudentBehaviorRecords")
-  proposedForMe         ProposedGrade[]   @relation("ProposedForStudent")
-  studentAttendance     Attendance[]      @relation("StudentAttendance")
-  goals                 GradeGoal[]       @relation("StudentGoals")
+  studentActivityScores ActivityScore[]  @relation("StudentActivityScores")
+  studentBehavior       BehaviorRecord[] @relation("StudentBehaviorRecords")
+  proposedForMe         ProposedGrade[]  @relation("ProposedForStudent")
+  studentAttendance     Attendance[]     @relation("StudentAttendance")
+  goals                 GradeGoal[]      @relation("StudentGoals")
 
   // как учитель
   teachings             Teaching[]
-  authoredAssessments   Assessment[]      @relation("AssessmentsByTeacher")
-  teacherActivityScores ActivityScore[]   @relation("TeacherActivityScores")
-  teacherBehavior       BehaviorRecord[]  @relation("TeacherBehaviorRecords")
-  proposedByMe          ProposedGrade[]   @relation("ProposedByTeacher")
-  teacherAttendance     Attendance[]      @relation("TeacherAttendance")
+  authoredAssessments   Assessment[]     @relation("AssessmentsByTeacher")
+  teacherActivityScores ActivityScore[]  @relation("TeacherActivityScores")
+  teacherBehavior       BehaviorRecord[] @relation("TeacherBehaviorRecords")
+  proposedByMe          ProposedGrade[]  @relation("ProposedByTeacher")
+  teacherAttendance     Attendance[]     @relation("TeacherAttendance")
 
   // классное руководство
-  curatedClasses        Klass[]
+  curatedClasses Klass[]
 
   // как автор домашних заданий
-  homeworkGiven         Homework[]      @relation("HomeworkByTeacher")
+  homeworkGiven Homework[] @relation("HomeworkByTeacher")
 
   // Telegram-бот (Ask BIL)
-  telegramLink   TelegramLink?
-  telegramCodes  TelegramLinkCode[]
+  telegramLink  TelegramLink?
+  telegramCodes TelegramLinkCode[]
 
   // личный план (планировщик ученика)
   plannerTasks PlannerTask[]
@@ -57,10 +59,6 @@ model Klass {
   year      String // "2026/2027"
   curatorId String? // классный руководитель
 
-  /// В одном учебном году класс с таким именем один: иначе «10A» начнёт
-  /// плодиться, и ученику на регистрации будет из чего выбирать непонятно что.
-  @@unique([name, year])
-
   curator         User?            @relation(fields: [curatorId], references: [id])
   settings        ClassSettings?
   enrollments     Enrollment[]
@@ -71,26 +69,30 @@ model Klass {
   attendance      Attendance[]
   homework        Homework[]
   scheduleSlots   ScheduleSlot[]
+
+  /// В одном учебном году класс с таким именем один: иначе «10A» начнёт
+  /// плодиться, и ученику на регистрации будет из чего выбирать непонятно что.
+  @@unique([name, year])
 }
 
 /// Настройки оценивания класса: веса, пороги, округление, лимиты работ.
 /// Хранятся в БД (а не в коде), потому что школы трактуют правила по-разному.
 model ClassSettings {
-  id        String @id @default(cuid())
-  classId   String @unique
+  id               String @id @default(cuid())
+  classId          String @unique
   // веса слагаемых четвертной (в процентах)
-  sasWeight       Int @default(50)
-  satWeight       Int @default(50)
-  formativeWeight Int @default(0)
+  sasWeight        Int    @default(50)
+  satWeight        Int    @default(50)
+  formativeWeight  Int    @default(0)
   // пороги перевода процента в оценку
-  thresholdThree Int @default(40)
-  thresholdFour  Int @default(65)
-  thresholdFive  Int @default(85)
+  thresholdThree   Int    @default(40)
+  thresholdFour    Int    @default(65)
+  thresholdFive    Int    @default(85)
   // лимиты работ за четверть
-  maxSasPerQuarter Int @default(4)
-  maxSatPerQuarter Int @default(1)
+  maxSasPerQuarter Int    @default(4)
+  maxSatPerQuarter Int    @default(1)
   // округление процентов/итогов: HALF_UP | FLOOR | CEIL | NONE
-  rounding String @default("HALF_UP")
+  rounding         String @default("HALF_UP")
 
   klass Klass @relation(fields: [classId], references: [id])
 }
@@ -123,7 +125,7 @@ model Teaching {
 
 /// Предмет: "Математика". Делится на разделы (Section) внутри четверти.
 model Subject {
-  id             String           @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   code           String
   teachings      Teaching[]
@@ -214,7 +216,7 @@ model BehaviorRecord {
   points    Int      @default(0) // модуль веса; знак берётся из kind
   comment   String?
 
-  student User @relation("StudentBehaviorRecords", fields: [studentId], references: [id])
+  student User  @relation("StudentBehaviorRecords", fields: [studentId], references: [id])
   klass   Klass @relation(fields: [classId], references: [id])
   teacher User  @relation("TeacherBehaviorRecords", fields: [teacherId], references: [id])
 }

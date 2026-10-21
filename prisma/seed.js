@@ -385,7 +385,7 @@ async function createHomework({ klassId, subjects, mathTeacherId, csTeacherId })
 }
 
 async function createSchedule({ klassId, subjects }) {
-  // Рабочая неделя 10А (Пн–Пт) из предметов, которые классу преподают, —
+  // Рабочая неделя 10A (Пн–Пт) из предметов, которые классу преподают, —
   // тех же трёх Teaching'ов из сида. Индекс в массиве = номер урока.
   const week = [
     [subjects.math.id, subjects.physics.id, subjects.cs.id],
